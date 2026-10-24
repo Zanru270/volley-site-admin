@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
+/* The admin works like the Bow + Arc CMS (BowAndArc/BOW-and-ARC-Admin): a
+   dark fixed sidebar, white section cards, underline inputs, edit drawers
+   that slide in from the right. It wears the website's theme: the palette
+   below is copied from ../volley-site/app/globals.css, and the fonts from
+   its app/fonts. Keep the palette in step with the site. */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bone: #e8e5d8;
+  --color-ink: #1a1a18;
+  --color-black: #272729;
+  --color-brick: #8b3a2b;
+  --color-stone: #aba79e;
+  --color-lemon: #c5ff98;
+  --color-green: #174526;
+  --color-lightGreen: #31712d;
+  --color-pink: #ff9f9a;
+  --color-red: #7e3225;
+  --color-yellow: #f6eb6d;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --color-bone: var(--color-bone);
+  --color-ink: var(--color-ink);
+  --color-black: var(--color-black);
+  --color-brick: var(--color-brick);
+  --color-stone: var(--color-stone);
+  --color-lemon: var(--color-lemon);
+  --color-green: var(--color-green);
+  --color-lightGreen: var(--color-lightGreen);
+  --color-pink: var(--color-pink);
+  --color-red: var(--color-red);
+  --color-yellow: var(--color-yellow);
+
+  --font-sans: var(--font-saans-face), Arial, Helvetica, sans-serif;
+  --font-publish: var(--font-publish-face), Georgia, serif;
+
+  /* Drawers slide in from the right, dialogs and toasts settle in. */
+  --animate-drawer-in: drawer-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-pop-in: pop-in 0.2s ease-out;
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-toast-in: toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
   }
 }
 
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drawer-in,
+  .animate-pop-in,
+  .animate-fade-in,
+  .animate-toast-in {
+    animation: none;
+  }
+}
+
+/* Light only, like the Bow + Arc CMS: every surface is painted bone or
+   white whatever the OS theme. */
+html {
+  color-scheme: light;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-bone font-sans text-ink;
+}
+
+/* The floating pill scrollbar from the Bow + Arc CMS. */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgb(26 26 24 / 0.3);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(26 26 24 / 0.55);
 }
