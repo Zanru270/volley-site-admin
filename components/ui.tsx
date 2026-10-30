@@ -1,53 +1,49 @@
 import type { ReactNode } from "react";
 import { Check, Loader2, Save, Search } from "lucide-react";
 
-/* The admin's building blocks, built like the Bow + Arc CMS's so the two
-   admins work the same way: underline inputs under small uppercase labels,
-   white section cards with their save button in the header, square-ish
-   buttons. Coloured in the website's palette (ink, bone, lemon, brick). */
+/* The admin's building blocks: hairline white cards with soft corners,
+   boxed inputs under small sentence-case labels, rounded buttons, pill
+   badges. Coloured in the website's palette (ink, bone, lemon, brick). */
 
 export const inputClass =
-  "w-full rounded-none border-b border-ink/25 bg-transparent py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink/35 hover:border-ink/50 focus:border-ink disabled:opacity-50";
+  "w-full rounded-lg border border-ink/15 bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-ink/35 hover:border-ink/30 focus:border-ink/60 focus:ring-3 focus:ring-ink/5 disabled:opacity-50";
 
-// Long text gets a box, not an underline, as in the Bow + Arc CMS.
-export const textareaClass =
-  "mt-1 w-full rounded-sm border border-ink/25 bg-transparent p-3 text-sm leading-relaxed text-ink outline-none transition-colors placeholder:text-ink/35 hover:border-ink/50 focus:border-ink";
+export const textareaClass = `${inputClass} mt-1 p-3 leading-relaxed`;
 
-export const labelClass =
-  "block text-xs font-medium tracking-wider text-ink/60 uppercase";
+export const labelClass = "block text-[13px] font-medium text-ink/70";
 
 const buttonBase =
-  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-60";
 export const button = {
-  primary: `${buttonBase} bg-black px-6 py-3 text-bone hover:bg-ink`,
-  secondary: `${buttonBase} border border-ink/20 bg-white px-5 py-3 text-ink hover:border-ink`,
-  danger: `${buttonBase} bg-brick px-5 py-3 text-white hover:bg-red`,
+  primary: `${buttonBase} bg-black px-4 py-2.5 text-bone hover:bg-ink`,
+  secondary: `${buttonBase} border border-ink/15 bg-white px-4 py-2.5 text-ink hover:border-ink/40`,
+  danger: `${buttonBase} bg-brick px-4 py-2.5 text-white hover:bg-red`,
   // A plain text button: Cancel, "Add a paragraph".
   ghost: `${buttonBase} px-1 py-2 text-ink/60 hover:text-ink`,
 };
 
-// The small square icon buttons in table rows: edit, delete, reorder.
+// The small icon buttons in table rows: edit, delete, reorder.
 export const iconButton =
-  "inline-flex cursor-pointer items-center justify-center rounded-md p-2 text-ink/40 transition-colors hover:bg-ink/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent";
-export const iconButtonDanger = `${iconButton} hover:bg-pink/25! hover:text-brick!`;
+  "inline-flex cursor-pointer items-center justify-center rounded-lg p-2 text-ink/40 transition-colors hover:bg-bone/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent";
+export const iconButtonDanger = `${iconButton} hover:bg-pink/30! hover:text-brick!`;
 
 export function PageHeader({
   title,
   description,
   actions,
 }: {
-  title: string;
+  title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end md:mb-10">
+    <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
-        <h1 className="text-2xl font-normal tracking-tight text-ink md:text-3xl">
+        <h1 className="font-publish text-3xl leading-tight text-ink md:text-[2.5rem]">
           {title}
         </h1>
         {description && (
-          <p className="mt-2 max-w-2xl text-sm text-ink/60">{description}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/55">{description}</p>
         )}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -55,8 +51,39 @@ export function PageHeader({
   );
 }
 
-/* A white section card. With a title, the title sits over a hairline with
-   the section's actions (usually its SaveButton) on the right. */
+/* A section heading outside a card, with an optional count chip: the
+   "Volley Reader 6" over the dashboard's article strip. */
+export function SectionTitle({
+  children,
+  count,
+  actions,
+}: {
+  children: ReactNode;
+  count?: number;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-4">
+      <h2 className="flex items-center gap-2 text-[15px] font-medium text-ink">
+        {children}
+        {count !== undefined && <CountChip>{count}</CountChip>}
+      </h2>
+      {actions}
+    </div>
+  );
+}
+
+// A small black square with a number: how many are in a section.
+export function CountChip({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-ink px-1.5 text-[11px] font-medium text-bone tabular-nums">
+      {children}
+    </span>
+  );
+}
+
+/* A white section card. With a title, the title sits on top with the
+   section's actions (usually its SaveButton) on the right. */
 export function Card({
   title,
   description,
@@ -71,11 +98,11 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`border border-ink/10 bg-white p-5 shadow-sm md:p-8 ${className}`}>
+    <section className={`rounded-2xl border border-ink/10 bg-white p-5 md:p-7 ${className}`}>
       {(title || actions) && (
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-ink/10 pb-4">
+        <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
-            {title && <h2 className="text-lg font-medium text-ink">{title}</h2>}
+            {title && <h2 className="text-[15px] font-medium text-ink">{title}</h2>}
             {description && (
               <p className="mt-1 text-sm text-ink/50">{description}</p>
             )}
@@ -87,6 +114,9 @@ export function Card({
     </section>
   );
 }
+
+// A tinted box inside a card or drawer: one schedule group, one room type.
+export const subPanel = "rounded-xl border border-ink/8 bg-bone/30 p-4 md:p-5";
 
 export function Field({
   label,
@@ -100,10 +130,10 @@ export function Field({
   className?: string;
 }) {
   return (
-    <label className={`block space-y-1 ${className}`}>
+    <label className={`block space-y-1.5 ${className}`}>
       <span className={labelClass}>{label}</span>
       {children}
-      {hint && <span className="block pt-1 text-xs text-ink/50">{hint}</span>}
+      {hint && <span className="block text-xs text-ink/50">{hint}</span>}
     </label>
   );
 }
@@ -121,23 +151,24 @@ export function SaveButton({
   label?: string;
   onClick?: () => void;
 }) {
+  const idle = !dirty && !pending;
   return (
     <button
       type={onClick ? "button" : "submit"}
       onClick={onClick}
       disabled={!dirty || pending}
-      className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${
-        !dirty && !pending
-          ? "cursor-default text-lightGreen"
-          : "cursor-pointer text-ink/60 hover:text-ink disabled:cursor-wait"
-      }`}
+      className={
+        idle
+          ? "inline-flex cursor-default items-center gap-1.5 rounded-full bg-lemon/50 px-3 py-1.5 text-xs font-medium text-green"
+          : `${button.primary} py-2! disabled:cursor-wait`
+      }
     >
       {pending ? (
         <Loader2 className="size-4 animate-spin" />
       ) : dirty ? (
         <Save className="size-4" />
       ) : (
-        <Check className="size-4" />
+        <Check className="size-3.5" />
       )}
       {pending ? "Saving…" : dirty ? label : "Saved"}
     </button>
@@ -171,18 +202,18 @@ export function Toggle({
           onChange={(e) => onChange(e.target.checked)}
           className="peer sr-only"
         />
-        <span className="h-6 w-11 rounded-full bg-ink/15 transition-colors peer-checked:bg-ink peer-focus-visible:ring-2 peer-focus-visible:ring-ink/30 after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:content-[''] peer-checked:after:translate-x-5" />
+        <span className="h-6 w-11 rounded-full bg-ink/15 transition-colors peer-checked:bg-ink peer-focus-visible:ring-3 peer-focus-visible:ring-ink/20 after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:content-[''] peer-checked:after:translate-x-5 peer-checked:after:bg-lemon" />
       </span>
     </label>
   );
 }
 
 const TAG: Record<string, string> = {
-  lemon: "border-lightGreen/30 bg-lemon/60 text-green",
-  pink: "border-brick/25 bg-pink/30 text-brick",
-  yellow: "border-ink/15 bg-yellow/50 text-ink",
-  stone: "border-ink/15 bg-stone/20 text-ink/70",
-  ink: "border-ink bg-ink text-bone",
+  lemon: "bg-lemon/55 text-green",
+  pink: "bg-pink/35 text-brick",
+  yellow: "bg-yellow/55 text-ink/80",
+  stone: "bg-bone/80 text-ink/60",
+  ink: "bg-ink text-bone",
 };
 export function Badge({
   tone = "stone",
@@ -193,7 +224,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center rounded-sm border px-2 py-1 text-[10px] leading-none font-medium tracking-wider uppercase ${TAG[tone]}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap ${TAG[tone]}`}
     >
       {children}
     </span>
@@ -202,17 +233,17 @@ export function Badge({
 
 export function Empty({ children }: { children: ReactNode }) {
   return (
-    <div className="border border-dashed border-ink/20 bg-white/50 px-6 py-12 text-center text-sm text-ink/50">
+    <div className="rounded-2xl border border-dashed border-ink/20 bg-bone/20 px-6 py-12 text-center text-sm leading-relaxed text-ink/55">
       {children}
     </div>
   );
 }
 
-/* List pages: a white toolbar (filters, search, a count) sitting on top of
-   the table, the two reading as one block. */
+/* List pages: the toolbar (filters, search, a count) is the top of the
+   table's card, the two reading as one block. */
 export function Toolbar({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col items-start justify-between gap-4 border border-b-0 border-ink/10 bg-white p-4 sm:flex-row sm:items-center">
+    <div className="flex flex-col items-start justify-between gap-4 rounded-t-2xl border border-b-0 border-ink/10 bg-white p-4 sm:flex-row sm:items-center md:px-5">
       {children}
     </div>
   );
@@ -220,7 +251,7 @@ export function Toolbar({ children }: { children: ReactNode }) {
 
 export function CountPill({ children }: { children: ReactNode }) {
   return (
-    <span className="shrink-0 self-end rounded-full border border-ink/10 bg-bone/60 px-3 py-1.5 text-[11px] font-medium tracking-wider text-ink/50 uppercase sm:self-auto">
+    <span className="shrink-0 self-end rounded-full bg-bone/60 px-3 py-1 text-xs font-medium text-ink/55 sm:self-auto">
       {children}
     </span>
   );
@@ -239,28 +270,31 @@ export function SearchBox({
     <div className="relative w-full min-w-0 sm:w-1/2 md:w-1/3">
       <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink/40" />
       <input
-        type="text"
+        type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-ink/15 py-2 pr-4 pl-9 text-sm text-ink outline-none transition-colors placeholder:text-ink/40 focus:border-ink/60"
+        aria-label={placeholder}
+        className={`${inputClass} py-2! pl-9!`}
       />
     </div>
   );
 }
 
-// Filter tabs: small bold uppercase labels on a bone track.
-export const tabs = "flex w-full gap-1 overflow-x-auto rounded-sm bg-bone/70 p-1 sm:w-fit";
+// Filter tabs: a segmented control on a bone track.
+export const tabs = "flex w-full gap-1 overflow-x-auto rounded-xl bg-bone/60 p-1 sm:w-fit";
 export const tab = (active: boolean) =>
-  `shrink-0 cursor-pointer rounded-sm px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase transition-all ${
-    active ? "bg-white text-ink shadow-sm" : "text-ink/50 hover:text-ink"
+  `shrink-0 cursor-pointer rounded-lg px-4 py-1.5 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+    active ? "bg-white font-medium text-ink shadow-soft" : "text-ink/55 hover:text-ink"
   }`;
 
+/* Tables sit in a white card; the header is a tinted rounded strip and the
+   rows run without rules, as in a ledger. */
 export const tableWrap =
-  "overflow-x-auto rounded-b-md border border-ink/10 bg-white shadow-sm";
+  "overflow-x-auto rounded-b-2xl border border-t-0 border-ink/10 bg-white px-2 pb-2 md:px-3 md:pb-3";
 export const tableHead =
-  "border-b border-ink/10 bg-bone/50 text-[10px] font-medium tracking-wider text-ink/50 uppercase";
-export const th = "px-6 py-4 font-medium";
-export const td = "px-6 py-4 align-top";
+  "text-xs text-ink/50 [&_th]:bg-bone/45 [&_th:first-child]:rounded-l-lg [&_th:last-child]:rounded-r-lg";
+export const th = "px-4 py-3 font-normal";
+export const td = "px-4 py-3.5 align-middle";
 export const tbody = "divide-y divide-ink/5";
-export const row = "transition-colors hover:bg-bone/30";
+export const row = "transition-colors hover:bg-bone/25";

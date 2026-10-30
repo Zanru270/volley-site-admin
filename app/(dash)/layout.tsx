@@ -1,26 +1,28 @@
 import { requireAdmin } from "@/lib/auth";
-import Sidebar from "@/components/Sidebar";
+import Frame from "@/components/Frame";
 import { ToastProvider } from "@/components/ToastProvider";
 
-/* The Bow + Arc CMS's frame: the fixed sidebar, and the page on bone
-   beside it. Every page under here can raise toasts. */
+/* The admin's frame (sidebar, top bar, the page's white sheet) around
+   every signed-in page. Every page under here can raise toasts. */
 export default async function DashboardLayout({
   children,
 }: LayoutProps<"/">) {
-  const { user } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
+  const email = user.email ?? "";
+  const { data: me } = await supabase
+    .from("admin_users")
+    .select("name")
+    .eq("email", email)
+    .maybeSingle();
   return (
     <ToastProvider>
-      <div className="flex min-h-screen bg-bone">
-        <Sidebar
-          email={user.email ?? ""}
-          siteUrl={process.env.NEXT_PUBLIC_SITE_URL ?? ""}
-        />
-        <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden md:ml-64">
-          <main className="flex-1 px-4 pt-22 pb-20 md:p-12 xl:p-16">
-            <div className="mx-auto max-w-6xl animate-fade-in">{children}</div>
-          </main>
-        </div>
-      </div>
+      <Frame
+        name={me?.name ?? ""}
+        email={email}
+        siteUrl={process.env.NEXT_PUBLIC_SITE_URL ?? ""}
+      >
+        {children}
+      </Frame>
     </ToastProvider>
   );
 }

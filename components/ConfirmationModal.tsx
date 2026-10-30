@@ -29,19 +29,19 @@ export default function ConfirmationModal({
   return (
     <div className="fixed inset-0 z-110 flex items-center justify-center overflow-y-auto p-4">
       <div
-        className="fixed inset-0 animate-fade-in bg-ink/60"
+        className="fixed inset-0 animate-fade-in bg-ink/45"
         onClick={isLoading ? undefined : onClose}
       />
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
-        className="relative mx-auto w-full max-w-md animate-pop-in overflow-hidden rounded-xl bg-white shadow-2xl"
+        className="relative mx-auto w-full max-w-md animate-pop-in overflow-hidden rounded-2xl bg-white shadow-2xl"
       >
         <div className="p-4 sm:p-6">
           <div className="flex items-start gap-4">
             <div
-              className={`shrink-0 rounded-full p-2 ${
+              className={`shrink-0 rounded-xl p-2 ${
                 variant === "confirm"
                   ? "bg-lemon/60 text-green"
                   : variant === "warning"
@@ -69,12 +69,12 @@ export default function ConfirmationModal({
           </div>
         </div>
 
-        <div className="flex flex-col-reverse items-stretch justify-end gap-3 border-t border-ink/10 bg-bone/40 px-4 py-4 sm:flex-row sm:items-center sm:px-6">
+        <div className="flex flex-col-reverse items-stretch justify-end gap-3 border-t border-ink/8 bg-bone/30 px-4 py-4 sm:flex-row sm:items-center sm:px-6">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="w-full cursor-pointer rounded-lg border border-ink/15 bg-white px-4 py-2.5 text-sm font-medium text-ink/60 transition-colors hover:text-ink disabled:opacity-50 sm:w-auto sm:border-transparent sm:bg-transparent sm:py-2"
+            className="w-full cursor-pointer rounded-lg border border-ink/15 bg-white px-4 py-2.5 text-sm font-medium text-ink/70 transition-colors hover:border-ink/40 hover:text-ink disabled:opacity-50 sm:w-auto sm:py-2"
           >
             Cancel
           </button>

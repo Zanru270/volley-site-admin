@@ -113,7 +113,7 @@ export default function FaqEditor({ initial }: { initial: FaqRow[] }) {
           <SearchBox value={search} onChange={setSearch} placeholder="Search questions..." />
         </div>
         <CountPill>
-          {shown.length} {shown.length === 1 ? "Question" : "Questions"}
+          {shown.length} {shown.length === 1 ? "question" : "questions"}
         </CountPill>
       </Toolbar>
 
@@ -131,7 +131,7 @@ export default function FaqEditor({ initial }: { initial: FaqRow[] }) {
               <tr key={row.id} className={rowClass}>
                 <td className={td}>
                   <div className="flex items-start gap-4">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-bone/60 text-ink/40">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-bone/60 text-ink/40">
                       <HelpCircle className="size-4.5" />
                     </span>
                     <div className="min-w-0">

@@ -11,8 +11,8 @@ import {
 import { CheckCircle2, X, XCircle } from "lucide-react";
 import type { Result } from "@/lib/result";
 
-/* Toasts in the top right, as in the Bow + Arc CMS: every save reports
-   here rather than beside its button. Successes go after 4 s, errors stay
+/* Toasts in the top right: every save reports here rather than beside
+   its button. Successes go after 4 s, errors stay
    8 s so there's time to read them. */
 
 type ToastItem = {
@@ -70,7 +70,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             role={t.variant === "error" ? "alert" : "status"}
-            className="pointer-events-auto flex w-80 max-w-[calc(100vw-32px)] animate-toast-in items-start gap-4 rounded-lg border border-ink/10 bg-white p-4 shadow-xl"
+            className="pointer-events-auto flex w-80 max-w-[calc(100vw-32px)] animate-toast-in items-start gap-4 rounded-xl border border-ink/10 bg-white p-4 shadow-soft"
           >
             <span className="mt-0.5 shrink-0">
               {t.variant === "success" ? (

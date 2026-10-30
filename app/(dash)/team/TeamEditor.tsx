@@ -65,7 +65,7 @@ export default function TeamEditor({ admins, me }: { admins: Admin[]; me: string
         description="Everyone who can sign in to this admin. Everyone here can do everything."
         actions={
           <button type="button" onClick={() => setAdding(true)} className={`${button.primary} w-full sm:w-auto`}>
-            <Plus className="size-4" /> Add Admin
+            <Plus className="size-4" /> Add admin
           </button>
         }
       />
@@ -73,7 +73,7 @@ export default function TeamEditor({ admins, me }: { admins: Admin[]; me: string
       <Toolbar>
         <span className="text-sm text-ink/50">People with access to the Volley CMS.</span>
         <CountPill>
-          {admins.length} {admins.length === 1 ? "Admin" : "Admins"}
+          {admins.length} {admins.length === 1 ? "admin" : "admins"}
         </CountPill>
       </Toolbar>
 
@@ -126,16 +126,16 @@ export default function TeamEditor({ admins, me }: { admins: Admin[]; me: string
       <EditModal
         isOpen={adding}
         onClose={() => setAdding(false)}
-        title="Add Admin"
+        title="Add admin"
         formId="admin-form"
-        saveLabel="Add to Team"
+        saveLabel="Add to team"
         isSaving={pending}
       >
         <form id="admin-form" onSubmit={onAdd} className="space-y-6">
           <Field label="Name">
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputClass} />
           </Field>
-          <Field label="Email Address">
+          <Field label="Email address">
             <input
               type="email"
               required
@@ -162,7 +162,7 @@ export default function TeamEditor({ admins, me }: { admins: Admin[]; me: string
         isOpen={removing !== null}
         onClose={() => setRemoving(null)}
         onConfirm={onRemove}
-        title="Remove Admin"
+        title="Remove admin"
         message={`Remove ${removing?.email}? They won't be able to sign in here any more.`}
         confirmText="Remove"
         isLoading={pending}

@@ -44,20 +44,20 @@ export default function LoginForm({ notAllowed }: { notAllowed: boolean }) {
       {error && (
         <div
           role="alert"
-          className="flex items-start gap-3 rounded-sm border border-brick/20 bg-pink/20 p-4 text-sm text-brick"
+          className="flex items-start gap-3 rounded-xl border border-brick/15 bg-pink/20 p-4 text-sm text-brick"
         >
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
-      <Field label="Email Address">
+      <Field label="Email address">
         <input
           type="email"
           required
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={`${inputClass} py-3!`}
+          className={inputClass}
         />
       </Field>
       <Field label="Password">
@@ -67,20 +67,20 @@ export default function LoginForm({ notAllowed }: { notAllowed: boolean }) {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className={`${inputClass} py-3!`}
+          className={inputClass}
         />
       </Field>
       <button
         type="submit"
         disabled={busy}
-        className={`${button.primary} mt-8! w-full py-4! active:scale-[0.98]`}
+        className={`${button.primary} mt-8! w-full py-3! active:scale-[0.98]`}
       >
         {busy ? (
           <>
             <Loader2 className="size-4.5 animate-spin" /> Signing in…
           </>
         ) : (
-          "Sign In"
+          "Sign in"
         )}
       </button>
     </form>

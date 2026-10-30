@@ -177,7 +177,7 @@ export default function ArticleModal({
         <ModalSection title="Body" description="The article, top to bottom. Without any blocks, the page shows the excerpt.">
           <div className="space-y-3">
             {a.body.map((block, i) => (
-              <div key={i} className="border border-ink/10 bg-bone/25 p-4">
+              <div key={i} className="rounded-xl border border-ink/8 bg-bone/30 p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className={labelClass}>{blockLabel(block.type)}</span>
                   <RowControls

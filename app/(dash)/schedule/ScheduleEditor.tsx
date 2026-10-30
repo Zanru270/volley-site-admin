@@ -42,7 +42,7 @@ export default function ScheduleEditor({ initial }: { initial: Viewings }) {
       <Card title="Timetable" description="One block per group of days, each with its viewing windows." actions={saveButton}>
         <div className="space-y-6">
           {v.schedule.map((group, g) => (
-            <div key={g} className="border border-ink/10 bg-bone/25 p-4 md:p-6">
+            <div key={g} className="rounded-xl border border-ink/8 bg-bone/30 p-4 md:p-6">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <p className="font-medium">{group.days || "New group of days"}</p>
                 <RowControls
@@ -95,7 +95,7 @@ export default function ScheduleEditor({ initial }: { initial: Viewings }) {
                   return (
                     <div
                       key={s}
-                      className="grid gap-4 border border-ink/10 bg-white p-4 md:grid-cols-[auto_auto_1fr_1fr_auto] md:items-end"
+                      className="grid gap-4 rounded-xl border border-ink/10 bg-white p-4 md:grid-cols-[auto_auto_1fr_1fr_auto] md:items-end"
                     >
                       <Field label="From">
                         <input type="time" value={slot.from} onChange={(e) => setSlot({ ...slot, from: e.target.value })} className={inputClass} />

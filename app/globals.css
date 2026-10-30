@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
-/* The admin works like the Bow + Arc CMS (BowAndArc/BOW-and-ARC-Admin): a
-   dark fixed sidebar, white section cards, underline inputs, edit drawers
-   that slide in from the right. It wears the website's theme: the palette
-   below is copied from ../volley-site/app/globals.css, and the fonts from
-   its app/fonts. Keep the palette in step with the site. */
+/* The admin's frame: a light sidebar on the bone canvas, the page on a
+   rounded white sheet beside it, hairline cards with soft corners, boxed
+   inputs, and edit drawers that float in from the right. It wears the
+   website's theme: the palette below is copied from
+   ../volley-site/app/globals.css, and the fonts from its app/fonts. Keep
+   the palette in step with the site. */
 
 :root {
   --color-bone: #e8e5d8;
@@ -33,6 +34,10 @@
   --color-red: var(--color-red);
   --color-yellow: var(--color-yellow);
 
+  /* The one soft shadow: under the active nav pill, floating menus and
+     the stat tiles on the dashboard's welcome panel. */
+  --shadow-soft: 0 1px 2px rgb(26 26 24 / 0.04), 0 4px 14px -6px rgb(26 26 24 / 0.12);
+
   --font-sans: var(--font-saans-face), Arial, Helvetica, sans-serif;
   --font-publish: var(--font-publish-face), Georgia, serif;
 
@@ -45,7 +50,7 @@
 
 @keyframes drawer-in {
   from {
-    transform: translateX(100%);
+    transform: translateX(calc(100% + 1rem));
   }
 }
 
@@ -78,8 +83,8 @@
   }
 }
 
-/* Light only, like the Bow + Arc CMS: every surface is painted bone or
-   white whatever the OS theme. */
+/* Light only: every surface is painted bone or white whatever the OS
+   theme. */
 html {
   color-scheme: light;
 }
@@ -88,7 +93,7 @@ body {
   @apply bg-bone font-sans text-ink;
 }
 
-/* The floating pill scrollbar from the Bow + Arc CMS. */
+/* A floating pill scrollbar. */
 ::-webkit-scrollbar {
   width: 12px;
 }

@@ -51,7 +51,7 @@ export default function LocationList({ locations }: { locations: (Location & { u
       <Toolbar>
         <span className="text-sm text-ink/50">Click a residence to edit its page.</span>
         <CountPill>
-          {locations.length} {locations.length === 1 ? "Location" : "Locations"}
+          {locations.length} {locations.length === 1 ? "location" : "locations"}
         </CountPill>
       </Toolbar>
 
@@ -70,7 +70,7 @@ export default function LocationList({ locations }: { locations: (Location & { u
               <tr key={l.slug} className={`${row} cursor-pointer`} onClick={() => setEditing(l)}>
                 <td className={td}>
                   <div className="flex items-center gap-4">
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-sm bg-bone/60 text-ink/40">
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-bone/60 text-ink/40">
                       <MapPin className="size-5" />
                     </span>
                     <div className="min-w-0">

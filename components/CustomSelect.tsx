@@ -5,8 +5,8 @@ import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 import { labelClass } from "@/components/ui";
 
-/* A dropdown drawn like the inputs (an underline, a chevron) instead of
-   the browser's own, as in the Bow + Arc CMS. Controlled: `value` in,
+/* A dropdown drawn like the inputs (a rounded box, a chevron) instead of
+   the browser's own. Controlled: `value` in,
    `onChange` out.
 
    The menu is portalled to <body> and placed with `position: fixed` under
@@ -65,7 +65,7 @@ export default function CustomSelect({
   const upwards = rect ? rect.bottom + menuHeight + 8 > window.innerHeight && rect.top > menuHeight : false;
 
   return (
-    <div className={`space-y-1 ${className}`}>
+    <div className={`space-y-1.5 ${className}`}>
       {label && <span className={labelClass}>{label}</span>}
       <button
         ref={buttonRef}
@@ -74,7 +74,7 @@ export default function CustomSelect({
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="group flex w-full cursor-pointer items-center justify-between gap-3 border-b border-ink/25 bg-transparent py-2 text-left text-sm text-ink transition-colors hover:border-ink disabled:cursor-wait disabled:opacity-50"
+        className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-ink/15 bg-white px-3 py-2.5 text-left text-sm text-ink transition-colors hover:border-ink/30 focus-visible:border-ink/60 focus-visible:outline-none disabled:cursor-wait disabled:opacity-50"
       >
         <span className="truncate">{selected}</span>
         <ChevronDown
@@ -93,7 +93,7 @@ export default function CustomSelect({
               width: Math.max(rect.width, 176),
               ...(upwards ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
             }}
-            className="z-120 animate-pop-in border border-ink/10 bg-white py-1 shadow-xl"
+            className="z-120 animate-pop-in rounded-xl border border-ink/10 bg-white p-1 shadow-soft"
           >
             {options.map((o) => (
               <button
@@ -105,7 +105,7 @@ export default function CustomSelect({
                   setOpen(false);
                   if (o.value !== value) onChange(o.value);
                 }}
-                className="flex h-10 w-full cursor-pointer items-center justify-between px-4 text-left text-sm text-ink/70 transition-colors hover:bg-bone/50 hover:text-ink"
+                className="flex h-10 w-full cursor-pointer items-center justify-between rounded-lg px-3 text-left text-sm text-ink/70 transition-colors hover:bg-bone/50 hover:text-ink"
               >
                 {o.label}
                 {o.value === value && <Check className="size-3.5 text-ink" />}

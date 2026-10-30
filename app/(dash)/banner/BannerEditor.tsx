@@ -14,7 +14,7 @@ export default function BannerEditor({ initial }: { initial: Banner }) {
     <div className="space-y-8">
       <Card title="Preview">
         {banner.enabled ? (
-          <div className="bg-lemon px-3 py-3 text-center text-xs font-bold text-ink">
+          <div className="rounded-lg bg-lemon px-3 py-3 text-center text-xs font-bold text-ink">
             {banner.text}
             {banner.linkText && <span className="font-light underline">{banner.linkText}</span>}
             <span className="font-light">{banner.after}</span>
@@ -30,7 +30,7 @@ export default function BannerEditor({ initial }: { initial: Banner }) {
           save();
         }}
       >
-        <Card title="Banner" actions={<SaveButton dirty={dirty} pending={pending} label="Save Banner" />}>
+        <Card title="Banner" actions={<SaveButton dirty={dirty} pending={pending} label="Save banner" />}>
           <div className="space-y-6">
             <Toggle
               checked={banner.enabled}

@@ -167,7 +167,7 @@ export default function LocationModal({
               </Field>
 
               {rooms.types.map((room, i) => (
-                <div key={i} className="border border-ink/10 bg-bone/25 p-4 md:p-5">
+                <div key={i} className="rounded-xl border border-ink/8 bg-bone/30 p-4 md:p-5">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <p className="font-medium">{room.label || "New room type"}</p>
                     <RowControls

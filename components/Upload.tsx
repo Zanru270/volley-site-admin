@@ -151,7 +151,7 @@ export function ImageField({
           setDragging(false);
           upload(e.dataTransfer.files?.[0]);
         }}
-        className={`group relative flex h-44 cursor-pointer items-center justify-center overflow-hidden border border-dashed transition-colors ${
+        className={`group relative flex h-44 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed transition-colors ${
           dragging ? "border-ink bg-bone/60" : "border-ink/25 bg-bone/30 hover:border-ink/60"
         }`}
       >
@@ -159,9 +159,9 @@ export function ImageField({
           <img src={siteAsset(value)} alt="" className="absolute inset-0 size-full object-cover" />
         )}
         <span
-          className={`relative flex flex-col items-center gap-2 px-4 text-center text-xs font-medium tracking-wider uppercase transition-opacity ${
+          className={`relative flex flex-col items-center gap-2 px-4 text-center text-xs font-medium transition-opacity ${
             value
-              ? "rounded-sm bg-white/90 py-2 text-ink opacity-0 shadow-sm group-hover:opacity-100 group-focus-visible:opacity-100"
+              ? "rounded-lg bg-white/90 py-2 text-ink opacity-0 shadow-soft group-hover:opacity-100 group-focus-visible:opacity-100"
               : "text-ink/50"
           } ${busy ? "opacity-100!" : ""}`}
         >

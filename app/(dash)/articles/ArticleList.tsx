@@ -78,7 +78,7 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
         description="The articles in the home page carousel, each with its own page. Drafts stay hidden until published."
         actions={
           <button type="button" onClick={() => setEditing(BLANK_ARTICLE)} className={`${button.primary} w-full sm:w-auto`}>
-            <Plus className="size-4" /> New Article
+            <Plus className="size-4" /> New article
           </button>
         }
       />
@@ -86,7 +86,7 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
       <Toolbar>
         <SearchBox value={search} onChange={setSearch} placeholder="Search articles..." />
         <CountPill>
-          {shown.length} {shown.length === 1 ? "Article" : "Articles"}
+          {shown.length} {shown.length === 1 ? "article" : "articles"}
         </CountPill>
       </Toolbar>
 
@@ -107,7 +107,7 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
                 <tr key={a.id} className={row}>
                   <td className={td}>
                     <div className="flex items-center gap-4">
-                      <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-bone/60">
+                      <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-bone/60">
                         {a.image ? (
                           <img src={siteAsset(a.image)} alt="" className="size-full object-cover" />
                         ) : (
@@ -176,7 +176,7 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
         isOpen={deleting !== null}
         onClose={() => setDeleting(null)}
         onConfirm={onDelete}
-        title="Delete Article"
+        title="Delete article"
         message={`Are you sure you want to delete "${deleting?.title}"? This can't be undone.`}
         isLoading={pending}
       />
