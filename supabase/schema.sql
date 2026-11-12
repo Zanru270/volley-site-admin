@@ -63,7 +63,7 @@ end $$;
 -- Content. Same shapes as volley-site/content/*.json (see its README).
 -- ---------------------------------------------------------------------------
 
--- Single values by key: 'banner' and 'viewings'.
+-- Single values by key: 'banner', 'home', 'viewings' and 'waitlist_form'.
 create table if not exists public.settings (
   key text primary key,
   value jsonb not null,
@@ -86,6 +86,9 @@ create table if not exists public.articles (
   slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   title text not null,
   location text not null default '',
+  -- Its date: the articles show newest first. meta is the old free-text
+  -- byline, shown only while there's no date.
+  date date,
   meta text not null default '',
   category text not null default '',
   excerpt text not null default '',
@@ -99,17 +102,50 @@ create table if not exists public.articles (
   updated_at timestamptz not null default now()
 );
 
--- The editable parts of each location page. null keeps the value in
+-- The editable parts of each location (a "building" in the admin): its
+-- page, (status, summary) its card in the Locations carousel, (sort) its
+-- place in that carousel, and (photos) every photo on its page and card,
+-- by slot. null keeps the value, the order or the photo in
 -- volley-site/lib/locations.js.
 create table if not exists public.locations (
   slug text primary key,
+  name text,
+  beds integer,
+  beds_word text,
   address text,
+  city text,
+  footer text,
+  status text,
+  visibility text,
+  card_colour text,
+  summary text,
+  sort integer,
+  photos jsonb,
   description jsonb,
   pricelist text,
+  buttons jsonb,
+  tour text,
+  sections jsonb,
   stats jsonb,
   rooms jsonb,
+  included jsonb,
+  area jsonb,
   updated_at timestamptz not null default now()
 );
+-- Added after the first release, for projects set up before then.
+alter table public.locations add column if not exists status text;
+alter table public.locations add column if not exists summary text;
+alter table public.locations add column if not exists sort integer;
+alter table public.locations add column if not exists photos jsonb;
+alter table public.locations add column if not exists included jsonb;
+alter table public.locations add column if not exists area jsonb;
+alter table public.locations add column if not exists name text;
+alter table public.locations add column if not exists beds integer;
+alter table public.locations add column if not exists beds_word text;
+alter table public.locations add column if not exists buttons jsonb;
+alter table public.locations add column if not exists tour text;
+alter table public.locations add column if not exists sections jsonb;
+alter table public.articles add column if not exists date date;
 
 do $$
 declare t text;

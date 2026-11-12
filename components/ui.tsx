@@ -27,21 +27,33 @@ export const iconButton =
   "inline-flex cursor-pointer items-center justify-center rounded-lg p-2 text-ink/40 transition-colors hover:bg-bone/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent";
 export const iconButtonDanger = `${iconButton} hover:bg-pink/30! hover:text-brick!`;
 
+/* A page's heading: its title, optionally beside its icon on an ink tile
+   (as the Bow + Arc CMS's pages have it), a line under it, and its main
+   actions on the right. */
 export function PageHeader({
   title,
   description,
   actions,
+  icon: Icon,
 }: {
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
+  icon?: React.ElementType;
 }) {
   return (
     <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
-        <h1 className="font-publish text-3xl leading-tight text-ink md:text-[2.5rem]">
-          {title}
-        </h1>
+        <div className="flex items-center gap-3">
+          {Icon && (
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-ink text-lemon">
+              <Icon className="size-5" strokeWidth={1.75} aria-hidden="true" />
+            </span>
+          )}
+          <h1 className="font-publish text-3xl leading-tight text-ink md:text-[2.5rem]">
+            {title}
+          </h1>
+        </div>
         {description && (
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/55">{description}</p>
         )}

@@ -1,6 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
+import { getBuildings } from "@/lib/buildings";
+import { newestFirst } from "@/lib/articles";
 import { getSetting } from "@/lib/settings";
-import type { Banner, Viewings } from "@/lib/types";
+import { viewingWindows, type Banner, type SavedViewings } from "@/lib/types";
 import DashboardView, { type DashboardData } from "./DashboardView";
 
 /* What's on the website right now: the welcome panel with the banner and
@@ -13,23 +15,24 @@ export default async function DashboardPage() {
   const [articles, faqs, locations, banner, viewings, me] = await Promise.all([
     supabase
       .from("articles")
-      .select("id, slug, title, location, meta, category, excerpt, image, published")
+      .select("*")
       .order("sort"),
     supabase.from("faqs").select("tab"),
-    supabase.from("locations").select("slug, address, rooms, updated_at").order("slug"),
+    // Every column: `name` is only there once the database has it.
+    getBuildings<DashboardData["locations"][number]>(supabase),
     getSetting<Banner>(supabase, "banner"),
-    getSetting<Viewings>(supabase, "viewings"),
+    getSetting<SavedViewings>(supabase, "viewings"),
     supabase.from("admin_users").select("name").eq("email", user.email ?? "").maybeSingle(),
   ]);
 
   return (
     <DashboardView
       firstName={me.data?.name?.split(" ")[0]}
-      articles={(articles.data ?? []) as DashboardData["articles"]}
+      articles={newestFirst((articles.data ?? []) as DashboardData["articles"])}
       faqTabs={(faqs.data ?? []).map((f) => f.tab as string)}
-      locations={(locations.data ?? []) as DashboardData["locations"]}
+      locations={locations.buildings}
       banner={banner}
-      viewings={viewings}
+      viewings={viewings && viewingWindows(viewings)}
     />
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- previews of arbitrary URLs */
 import { useRef, useState } from "react";
 import { FileText, Loader2, Upload as UploadIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
@@ -9,9 +8,10 @@ import { siteAsset } from "@/lib/site";
 
 const BUCKET = "media";
 
-/* Photos are shrunk to at most this many pixels on the long side and saved
-   as WebP before upload: phone photos are 4–12 MB, and nothing on the site
-   shows a photo wider than this. */
+/* Plain uploads for what isn't a photo (PDFs, videos): photos have
+   components/ImageUploader.tsx. Any photo that does come through here is
+   still shrunk to at most this many pixels on the long side and saved as
+   WebP. */
 const MAX_SIDE = 2560;
 const QUALITY = 0.85;
 
@@ -104,96 +104,6 @@ export function UploadButton({
   );
 }
 
-/* An image, as the Bow + Arc CMS's ImageUploader: a drop zone (drag a
-   photo onto it, or click to pick one) showing the current photo, and its
-   URL underneath, editable for site paths like /images/x.webp. */
-export function ImageField({
-  value,
-  onChange,
-  folder,
-}: {
-  value: string;
-  onChange: (url: string) => void;
-  folder: string;
-}) {
-  const input = useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  const upload = async (file: File | undefined) => {
-    if (!file || busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      onChange(await uploadFile(file, folder));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => input.current?.click()}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && input.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          upload(e.dataTransfer.files?.[0]);
-        }}
-        className={`group relative flex h-44 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed transition-colors ${
-          dragging ? "border-ink bg-bone/60" : "border-ink/25 bg-bone/30 hover:border-ink/60"
-        }`}
-      >
-        {value && (
-          <img src={siteAsset(value)} alt="" className="absolute inset-0 size-full object-cover" />
-        )}
-        <span
-          className={`relative flex flex-col items-center gap-2 px-4 text-center text-xs font-medium transition-opacity ${
-            value
-              ? "rounded-lg bg-white/90 py-2 text-ink opacity-0 shadow-soft group-hover:opacity-100 group-focus-visible:opacity-100"
-              : "text-ink/50"
-          } ${busy ? "opacity-100!" : ""}`}
-        >
-          {busy ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : (
-            <UploadIcon className="size-5" />
-          )}
-          {busy ? "Uploading…" : value ? "Replace photo" : "Drop a photo, or click to upload"}
-        </span>
-        <input
-          ref={input}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => {
-            upload(e.target.files?.[0]);
-            e.target.value = "";
-          }}
-        />
-      </div>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="/images/… or upload above"
-        className={inputClass}
-      />
-      {error && <p className="text-xs text-brick">{error}</p>}
-    </div>
-  );
-}
-
 // A PDF link with an upload button, e.g. a pricelist.
 export function PdfField({
   value,
@@ -229,6 +139,52 @@ export function PdfField({
         folder={folder}
         onUploaded={onChange}
         label="Upload PDF"
+      />
+    </div>
+  );
+}
+
+/* A video, e.g. the home page's hero: the current one playing (muted, as
+   on the site) over its URL, with an upload button. Videos go up as they
+   are, so they want to be small before they get here. */
+export function VideoField({
+  value,
+  onChange,
+  folder,
+}: {
+  value: string;
+  onChange: (url: string) => void;
+  folder: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex aspect-video w-full max-w-xl items-center justify-center overflow-hidden rounded-xl border border-ink/10 bg-ink">
+        {value ? (
+          <video
+            key={value}
+            src={siteAsset(value)}
+            muted
+            loop
+            autoPlay
+            playsInline
+            controls
+            className="size-full object-cover"
+          />
+        ) : (
+          <span className="text-xs text-bone/60">No video</span>
+        )}
+      </div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="/videos/… or upload"
+        className={inputClass}
+      />
+      <UploadButton
+        accept="video/mp4,video/webm"
+        folder={folder}
+        onUploaded={onChange}
+        label="Upload a new video"
       />
     </div>
   );

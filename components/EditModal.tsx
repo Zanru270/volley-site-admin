@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Loader2, Save, X } from "lucide-react";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 /* The edit panel every list page opens: a rounded drawer floating in from
    the right over a dimmed page, with a fixed header and a Cancel / Save
    footer. Shared by every list page rather than repeated in each. The form inside gets `id={formId}` so the
-   footer's Save button submits it. */
+   footer's Save button submits it. While `dirty`, closing it (Cancel, the
+   cross, Escape, a click on the dimmed page) asks before throwing the
+   changes away. */
 export default function EditModal({
   isOpen,
   onClose,
@@ -15,6 +18,7 @@ export default function EditModal({
   saveLabel = "Save",
   isSaving = false,
   wide = false,
+  dirty = false,
   children,
 }: {
   isOpen: boolean;
@@ -24,19 +28,35 @@ export default function EditModal({
   saveLabel?: string;
   isSaving?: boolean;
   wide?: boolean;
+  // Has changes that closing would lose.
+  dirty?: boolean;
   children: ReactNode;
 }) {
-  // The page behind stays put while the drawer is open; Escape closes it.
+  // Asking whether to discard the changes.
+  const [confirming, setConfirming] = useState(false);
+  const requestClose = () => {
+    if (isSaving) return;
+    if (dirty) setConfirming(true);
+    else onClose();
+  };
+
+  // The page behind stays put while the drawer is open. Escape closes it,
+  // or the discard question first if that's showing.
   useEffect(() => {
     if (!isOpen) return;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !isSaving && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || isSaving) return;
+      if (confirming) setConfirming(false);
+      else if (dirty) setConfirming(true);
+      else onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKey);
     };
-  }, [isOpen, isSaving, onClose]);
+  }, [isOpen, isSaving, dirty, confirming, onClose]);
 
   if (!isOpen) return null;
 
@@ -44,7 +64,7 @@ export default function EditModal({
     <div className="fixed inset-0 z-100 flex justify-end md:p-3">
       <div
         className="absolute inset-0 animate-fade-in bg-ink/35"
-        onClick={isSaving ? undefined : onClose}
+        onClick={requestClose}
       />
       <div
         role="dialog"
@@ -60,7 +80,7 @@ export default function EditModal({
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={isSaving}
             aria-label="Close"
             className="cursor-pointer rounded-full p-2 text-ink/40 transition-colors hover:bg-ink/5 hover:text-ink"
@@ -74,7 +94,7 @@ export default function EditModal({
         <div className="z-10 flex justify-end gap-2 border-t border-ink/8 bg-bone/30 px-5 py-4 md:px-7">
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={isSaving}
             className="cursor-pointer rounded-lg border border-ink/15 bg-white px-4 py-2.5 text-sm font-medium text-ink/70 transition-colors hover:border-ink/40 hover:text-ink"
           >
@@ -91,27 +111,19 @@ export default function EditModal({
           </button>
         </div>
       </div>
-    </div>
-  );
-}
 
-/* A titled group inside a drawer: a hairline above, then the fields. */
-export function ModalSection({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-5 border-t border-ink/8 pt-6">
-      <div>
-        <h3 className="text-sm font-medium text-ink">{title}</h3>
-        {description && <p className="mt-1 text-xs text-ink/50">{description}</p>}
-      </div>
-      {children}
+      <ConfirmationModal
+        isOpen={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={() => {
+          setConfirming(false);
+          onClose();
+        }}
+        title="Discard your changes?"
+        message="What you've changed here hasn't been saved. Close anyway and lose it?"
+        confirmText="Discard changes"
+        variant="warning"
+      />
     </div>
   );
 }

@@ -8,8 +8,10 @@ import {
   HelpCircle,
   MapPin,
 } from "lucide-react";
-import { LOCATION_NAMES, siteAsset } from "@/lib/site";
+import { articleDate } from "@/lib/articles";
+import { buildingName, siteAsset } from "@/lib/site";
 import type { Article, Banner, Location, Viewings } from "@/lib/types";
+import { viewingDays } from "@/lib/viewings";
 import { Badge, button, SectionTitle, tableHead, td, th } from "@/components/ui";
 import ScheduleGlance from "./ScheduleGlance";
 
@@ -26,10 +28,10 @@ export type DashboardData = {
   firstName?: string;
   articles: Pick<
     Article,
-    "id" | "slug" | "title" | "location" | "meta" | "category" | "excerpt" | "image" | "published"
+    "id" | "slug" | "title" | "location" | "date" | "meta" | "sort" | "category" | "excerpt" | "image" | "published"
   >[];
   faqTabs: string[];
-  locations: Pick<Location, "slug" | "address" | "rooms" | "updated_at">[];
+  locations: Pick<Location, "slug" | "name" | "address" | "rooms" | "updated_at">[];
   banner: Banner | null;
   viewings: Viewings | null;
 };
@@ -48,7 +50,8 @@ export default function DashboardView({
   const cool = faqTabs.filter((t) => t === "cool").length;
   const faqCount = faqTabs.length;
   const roomTypes = residences.reduce((n, l) => n + (l.rooms?.types.length ?? 0), 0);
-  const slots = viewings?.schedule.reduce((n, g) => n + g.slots.length, 0) ?? 0;
+  const slots = viewings?.windows.length ?? 0;
+  const days = viewings ? viewingDays(viewings.windows) : [];
   const stats = [
     {
       label: "Published articles",
@@ -61,20 +64,20 @@ export default function DashboardView({
       label: "FAQs",
       value: faqCount,
       note: `${cool} cool, ${faqCount - cool} boring`,
-      href: "/faqs",
+      href: "/home?open=faqs.list",
       icon: HelpCircle,
     },
     {
-      label: "Residences",
+      label: "Buildings",
       value: residences.length,
       note: plural(roomTypes, "room type"),
-      href: "/locations",
+      href: "/buildings",
       icon: MapPin,
     },
     {
-      label: "Viewing windows",
+      label: "Viewings",
       value: slots,
-      note: viewings ? plural(viewings.schedule.length, "group") + " of days" : "Not set up yet",
+      note: viewings ? `on ${plural(new Set(viewings.windows.flatMap((w) => w.weekdays)).size, "day")} a week` : "Not set up yet",
       href: "/schedule",
       icon: CalendarClock,
     },
@@ -125,7 +128,7 @@ export default function DashboardView({
             </div>
           </div>
           <div className="flex gap-2">
-            <Link href="/banner" className={button.primary}>
+            <Link href="/home?open=banner" className={button.primary}>
               Edit banner
             </Link>
             <Link href="/articles" className={button.secondary}>
@@ -136,7 +139,7 @@ export default function DashboardView({
 
         {/* The banner as the site shows it, or a note that it's off. */}
         <Link
-          href="/banner"
+          href="/home?open=banner"
           className="relative mt-6 flex items-center gap-3 rounded-xl border border-ink/8 bg-white/80 p-2 pr-4 text-sm transition-colors hover:border-ink/25"
         >
           {banner?.enabled ? (
@@ -151,9 +154,9 @@ export default function DashboardView({
           ) : (
             <>
               <span className="min-w-0 flex-1 px-2 py-1.5 text-ink/55">
-                {banner ? "The banner is hidden on the website." : "The banner isn't in Supabase yet."}
+                {banner ? "The banner is hidden on the website." : "The banner hasn't been set up yet."}
               </span>
-              <Badge>{banner ? "Hidden" : "Not seeded"}</Badge>
+              <Badge>{banner ? "Hidden" : "Not set up"}</Badge>
             </>
           )}
         </Link>
@@ -197,7 +200,7 @@ export default function DashboardView({
             {reader.map((a) => (
               <Link
                 key={a.id}
-                href="/articles"
+                href={`/articles/${a.id}`}
                 className="flex w-72 shrink-0 snap-start sm:w-80 flex-col overflow-hidden rounded-2xl border border-ink/10 bg-white transition-colors hover:border-ink/30"
               >
                 <div className="flex items-start gap-3 p-4">
@@ -220,7 +223,7 @@ export default function DashboardView({
                   {a.excerpt || "No excerpt yet."}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2 bg-bone/30 px-4 py-3 text-xs">
-                  <span className="rounded-md bg-white px-2 py-1 text-ink/70">{a.meta || "No date line"}</span>
+                  <span className="rounded-md bg-white px-2 py-1 text-ink/70">{articleDate(a) || "No date"}</span>
                   {a.category && <span className="rounded-md bg-white px-2 py-1 text-ink/70">{a.category}</span>}
                 </div>
               </Link>
@@ -238,12 +241,12 @@ export default function DashboardView({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
         <section className="min-w-0">
-          <SectionTitle count={residences.length}>Locations</SectionTitle>
+          <SectionTitle count={residences.length}>Buildings</SectionTitle>
           <div className="overflow-x-auto rounded-2xl border border-ink/10 bg-white p-2 md:p-3">
             <table className="w-full text-left text-sm">
               <thead className={tableHead}>
                 <tr>
-                  <th className={th}>Residence</th>
+                  <th className={th}>Building</th>
                   <th className={th}>Room types</th>
                   <th className={th}>Last edited</th>
                 </tr>
@@ -252,13 +255,13 @@ export default function DashboardView({
                 {residences.map((l) => (
                   <tr key={l.slug} className="transition-colors hover:bg-bone/25">
                     <td className={td}>
-                      <Link href="/locations" className="flex items-center gap-3">
+                      <Link href={`/buildings/${l.slug}`} className="flex items-center gap-3">
                         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-bone/60 text-ink/45">
                           <MapPin className="size-4" />
                         </span>
                         <span className="min-w-0">
                           <span className="block font-medium whitespace-nowrap text-ink">
-                            {LOCATION_NAMES[l.slug] ?? l.slug}
+                            {buildingName(l)}
                           </span>
                           <span className="block max-w-56 truncate text-xs text-ink/50">
                             {l.address ?? "No address set"}
@@ -277,7 +280,7 @@ export default function DashboardView({
                 {residences.length === 0 && (
                   <tr>
                     <td colSpan={3} className="px-4 py-10 text-center text-ink/50">
-                      No residences in Supabase yet.
+                      No buildings yet.
                     </td>
                   </tr>
                 )}
@@ -288,7 +291,10 @@ export default function DashboardView({
 
         <section className="min-w-0">
           <SectionTitle>Viewing times</SectionTitle>
-          <ScheduleGlance schedule={viewings?.schedule ?? []} />
+          <ScheduleGlance
+            schedule={days}
+            names={Object.fromEntries(residences.map((l) => [l.slug, buildingName(l).replace(/^Volley /, "")]))}
+          />
         </section>
       </div>
     </div>

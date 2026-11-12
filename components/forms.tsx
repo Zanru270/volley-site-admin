@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { button, iconButton, iconButtonDanger, inputClass, textareaClass } from "@/components/ui";
-import { useToast } from "@/components/ToastProvider";
+import { useToast, type ToastAction } from "@/components/ToastProvider";
 import type { Result } from "@/lib/result";
+import Sortable from "@/components/Sortable";
+
+export { move } from "@/components/Sortable";
 
 /* Client helpers shared by the editors. Saves report through toasts, as in
    the Bow + Arc CMS. */
 
 /* A single-page settings form (banner, schedule): the value being edited,
    whether it differs from what's saved (for SaveButton's "Saved" state),
-   and save(), which sends it to a server action. */
+   save(), which sends it to a server action, and reset(), which puts back
+   what's saved. */
 export function useSettingsForm<T>(initial: T, action: (value: T) => Promise<Result>) {
   const toast = useToast();
   const [value, setValue] = useState(initial);
@@ -32,23 +36,26 @@ export function useSettingsForm<T>(initial: T, action: (value: T) => Promise<Res
       }
     });
 
-  return { value, setValue, dirty, pending, save };
+  const reset = () => setValue(saved);
+
+  return { value, setValue, dirty, pending, save, reset };
 }
 
 /* Runs a server action from a list page (save from a drawer, delete,
-   reorder): toasts the outcome and refreshes the page's data. Resolves to
-   whether it worked, so the caller can close its drawer. */
+   reorder): toasts the outcome (with `action` on the toast, e.g. Undo) and
+   refreshes the page's data. Resolves to whether it worked, so the caller
+   can close its drawer. */
 export function useAction() {
   const toast = useToast();
   const router = useRouter();
   const [pending, start] = useTransition();
 
-  const run = (action: () => Promise<Result>, title?: string) =>
+  const run = (action: () => Promise<Result>, title?: string, toastAction?: ToastAction) =>
     new Promise<boolean>((resolve) =>
       start(async () => {
         try {
           const result = await action();
-          toast.result(result, title);
+          toast.result(result, title, toastAction);
           if (result.ok) router.refresh();
           resolve(result.ok);
         } catch (err) {
@@ -61,22 +68,26 @@ export function useAction() {
   return { pending, run };
 }
 
-// Move up / move down / remove, for a row in a list.
+/* The controls on a row in a list: its grip to drag it by (`handle`, from
+   Sortable, which also fills in the rest), move up, move down, remove. */
 export function RowControls({
   index,
   count,
   onMove,
+  handle,
   onRemove,
   removeLabel = "Remove",
 }: {
   index: number;
   count: number;
   onMove: (from: number, to: number) => void;
+  handle?: ReactNode;
   onRemove?: () => void;
   removeLabel?: string;
 }) {
   return (
     <div className="flex shrink-0 items-center">
+      {handle}
       <button
         type="button"
         className={iconButton}
@@ -104,15 +115,8 @@ export function RowControls({
   );
 }
 
-export function move<T>(list: T[], from: number, to: number): T[] {
-  const next = [...list];
-  const [item] = next.splice(from, 1);
-  next.splice(to, 0, item);
-  return next;
-}
-
 /* A list of strings: paragraphs, bullets, closed dates. One field each,
-   with add, reorder and remove. */
+   with add, remove, and reorder by dragging or the arrows. */
 export function StringList({
   values,
   onChange,
@@ -128,37 +132,38 @@ export function StringList({
   multiline?: boolean;
   type?: string;
 }) {
-  const set = (i: number, v: string) =>
-    onChange(values.map((old, j) => (j === i ? v : old)));
+  const set = (i: number, v: string) => onChange(values.map((old, j) => (j === i ? v : old)));
   return (
     <div className="space-y-2">
-      {values.map((value, i) => (
-        <div key={i} className="flex items-start gap-2">
-          {multiline ? (
-            <textarea
-              value={value}
-              rows={3}
-              onChange={(e) => set(i, e.target.value)}
-              placeholder={placeholder}
-              className={textareaClass}
-            />
-          ) : (
-            <input
-              type={type}
-              value={value}
-              onChange={(e) => set(i, e.target.value)}
-              placeholder={placeholder}
-              className={inputClass}
-            />
-          )}
-          <RowControls
-            index={i}
-            count={values.length}
-            onMove={(a, b) => onChange(move(values, a, b))}
-            onRemove={() => onChange(values.filter((_, j) => j !== i))}
-          />
-        </div>
-      ))}
+      <Sortable
+        items={values}
+        onChange={onChange}
+        className="space-y-2"
+        itemClassName="flex items-start gap-2 rounded-lg"
+      >
+        {(value, sort) => (
+          <>
+            {multiline ? (
+              <textarea
+                value={value}
+                rows={3}
+                onChange={(e) => set(sort.index, e.target.value)}
+                placeholder={placeholder}
+                className={textareaClass}
+              />
+            ) : (
+              <input
+                type={type}
+                value={value}
+                onChange={(e) => set(sort.index, e.target.value)}
+                placeholder={placeholder}
+                className={inputClass}
+              />
+            )}
+            <RowControls {...sort.row} onRemove={sort.remove} />
+          </>
+        )}
+      </Sortable>
       <button type="button" onClick={() => onChange([...values, ""])} className={button.ghost}>
         <Plus className="size-4" /> {addLabel}
       </button>

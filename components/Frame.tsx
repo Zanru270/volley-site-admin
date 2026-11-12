@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ExternalLink, Menu, Search } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { ALL_PAGES, initials } from "@/components/nav";
+import { confirmNavigation } from "@/lib/navigation-guard";
 
-/* The admin's frame: the sidebar on the bone canvas, and beside it the
-   page on a rounded white sheet with a top bar. The top bar holds the page
+/* The admin's frame: the bone canvas, the page on a rounded white sheet
+   with a top bar, and the sidebar floating over its left edge as a rail
+   of icons (the sheet is inset by the rail plus its gutters, nothing more). The top bar holds the page
    jump (type a page's name, Enter goes there), the website link and who's
    signed in; on phones it also opens the sidebar drawer. */
 export default function Frame({
@@ -24,6 +26,7 @@ export default function Frame({
 }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
+  const closeNav = useCallback(() => setNavOpen(false), []);
 
   // A new page closes the phone drawer. Deferred a frame so it doesn't
   // cascade into the navigation's render.
@@ -45,11 +48,10 @@ export default function Frame({
       <Sidebar
         name={name}
         email={email}
-        siteUrl={siteUrl}
         isOpen={navOpen}
-        onClose={() => setNavOpen(false)}
+        onClose={closeNav}
       />
-      <div className="min-w-0 md:ml-64 md:py-3 md:pr-3">
+      <div className="min-w-0 md:py-3 md:pr-3 md:pl-22">
         <div className="flex min-h-screen flex-col bg-white md:min-h-[calc(100vh-1.5rem)] md:rounded-2xl md:border md:border-ink/8">
           <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-ink/8 bg-white/90 px-4 backdrop-blur md:rounded-t-2xl md:px-8">
             <button
@@ -116,10 +118,11 @@ function PageJump() {
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
+  // Leaving a screen with unsaved changes asks first.
   const go = (href: string) => {
     setOpen(false);
     setQuery("");
-    router.push(href);
+    void confirmNavigation().then((ok) => ok && router.push(href));
   };
 
   return (
@@ -169,9 +172,9 @@ function PageJump() {
             <li key={p.href} role="option" aria-selected={i === active}>
               <Link
                 href={p.href}
-                onClick={() => {
-                  setOpen(false);
-                  setQuery("");
+                onClick={(e) => {
+                  e.preventDefault();
+                  go(p.href);
                 }}
                 onMouseEnter={() => setActive(i)}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${

@@ -45,6 +45,46 @@ export async function addAdmin(input: {
   };
 }
 
+/* Changes someone's name in the admin list and, if one is given, their
+   password (to pass on to them, as when they were added). */
+export async function updateAdmin(input: {
+  email: string;
+  name: string;
+  password: string;
+}): Promise<Result> {
+  const { supabase } = await requireAdmin();
+  const email = input.email.trim().toLowerCase();
+  if (input.password && input.password.length < 10)
+    return { ok: false, message: "Use a password of at least 10 characters, or leave it empty to keep theirs." };
+
+  try {
+    const { data, error } = await supabase
+      .from("admin_users")
+      .update({ name: input.name.trim() })
+      .eq("email", email)
+      .select("email");
+    if (error) throw error;
+    if (!data.length) return { ok: false, message: `${email} isn't on the team any more.` };
+
+    if (input.password) {
+      const service = createServiceClient();
+      const { data: list, error: listError } = await service.auth.admin.listUsers({ perPage: 1000 });
+      if (listError) throw listError;
+      const login = list.users.find((u) => u.email?.toLowerCase() === email);
+      if (!login) return { ok: false, message: `The name is saved, but ${email} has no login to set a password on.` };
+      const { error: pwError } = await service.auth.admin.updateUserById(login.id, { password: input.password });
+      if (pwError) throw pwError;
+    }
+  } catch (err) {
+    return failed(err);
+  }
+  revalidatePath("/team");
+  return {
+    ok: true,
+    message: input.password ? `Saved. Send ${email} their new password.` : `Saved ${email}.`,
+  };
+}
+
 // Takes away someone's access. Their login stays, but opens nothing.
 export async function removeAdmin(email: string): Promise<Result> {
   const { supabase, user } = await requireAdmin();

@@ -2,67 +2,69 @@
 
 /* eslint-disable @next/next/no-img-element -- previews of arbitrary URLs */
 import { useState } from "react";
-import { Edit2, ExternalLink, FileText, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Badge,
-  button,
-  CountPill,
-  iconButton,
-  iconButtonDanger,
-  PageHeader,
-  row,
-  SearchBox,
-  tableHead,
-  tableWrap,
-  tbody,
-  td,
-  th,
-  Toolbar,
-} from "@/components/ui";
+  Edit2,
+  ExternalLink,
+  FileText,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
+import { Badge, button, CountPill, iconButton, iconButtonDanger, PageHeader, SearchBox } from "@/components/ui";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import { move, RowControls, useAction } from "@/components/forms";
+import ListViewSwitch from "@/components/ListViewSwitch";
+import { useAction } from "@/components/forms";
+import { useListView } from "@/hooks/useListView";
+import { articleDate } from "@/lib/articles";
 import { siteAsset } from "@/lib/site";
 import type { Article } from "@/lib/types";
-import ArticleModal, { BLANK_ARTICLE } from "./ArticleModal";
-import { deleteArticle, reorderArticles, saveArticle } from "./actions";
+import { deleteArticle } from "./actions";
 
-/* The Volley Reader articles in carousel order, as the Bow + Arc CMS's
-   News page: a table with edit and delete on each row, and the article
-   itself edited in a drawer. Moving a row saves the new order at once. */
+type Status = "published" | "draft";
+const STATUS_CHIPS: { label: string; value: Status | null }[] = [
+  { label: "All", value: null },
+  { label: "Published", value: "published" },
+  { label: "Drafts", value: "draft" },
+];
+const statusOf = (a: Article): Status => (a.published ? "published" : "draft");
+
+// A filter chip with its count, as on the Bow + Arc CMS's News & Views page.
+const chipClass = (active: boolean) =>
+  `inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+    active
+      ? "border-ink bg-ink text-bone"
+      : "border-ink/12 bg-white text-ink/60 hover:border-ink/30 hover:text-ink"
+  }`;
+
+const overPhoto =
+  "inline-flex cursor-pointer items-center justify-center rounded-full bg-white/90 p-2 text-ink/60 shadow-soft transition-colors hover:bg-white hover:text-ink";
+
+/* The Volley Reader, laid out like the Bow + Arc CMS's News & Views page: a
+   toolbar (search, a count, grid or list), published / draft chips, then a
+   card or a row per article. Opening one goes to its live editor
+   (/articles/[id]), as there. As there too, they're newest first by date,
+   the order the website shows them in; `initial` comes sorted. */
 export default function ArticleList({ initial }: { initial: Article[] }) {
-  const [list, setList] = useState(initial);
+  const router = useRouter();
+  // Fresh from the server after every change (router.refresh).
+  const list = initial;
   const [search, setSearch] = useState("");
-  const [editing, setEditing] = useState<Article | null>(null);
+  const [status, setStatus] = useState<Status | null>(null);
+  const [view, setView] = useListView("admin-articles-view");
   const [deleting, setDeleting] = useState<Article | null>(null);
   const { pending, run } = useAction();
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
-  // The server's copy wins once it arrives after a save (router.refresh).
-  const [prevInitial, setPrevInitial] = useState(initial);
-  if (initial !== prevInitial) {
-    setPrevInitial(initial);
-    setList(initial);
-  }
-
   const q = search.trim().toLowerCase();
-  const shown = q
-    ? list.filter((a) =>
-        [a.title, a.location, a.category, a.slug].some((t) => t?.toLowerCase().includes(q)),
-      )
+  const searched = q
+    ? list.filter((a) => [a.title, a.location, a.category, a.slug].some((t) => t?.toLowerCase().includes(q)))
     : list;
-
-  const reorder = async (from: number, to: number) => {
-    const next = move(list, from, to);
-    setList(next);
-    if (!(await run(() => reorderArticles(next.map((a) => a.id)), "Order saved"))) setList(list);
-  };
-
-  const onSave = async (article: Article) => {
-    const ok = await run(
-      () => saveArticle(article),
-      article.id === "new" ? "Article created" : "Article saved",
-    );
-    if (ok) setEditing(null);
+  const shown = status ? searched.filter((a) => statusOf(a) === status) : searched;
+  const clear = () => {
+    setSearch("");
+    setStatus(null);
   };
 
   const onDelete = async () => {
@@ -71,105 +73,179 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
     setDeleting(null);
   };
 
+  const edit = (a: Article) => router.push(`/articles/${a.id}`);
+  const byline = (a: Article) => [a.location, articleDate(a)].filter(Boolean).join(" | ");
+  const viewLink = (a: Article, className: string) =>
+    a.published &&
+    siteUrl && (
+      <a
+        href={`${siteUrl}/volley-reader/${a.slug}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        aria-label={`View ${a.title} on the website`}
+        title="View on the website"
+      >
+        <ExternalLink className="size-4" />
+      </a>
+    );
+
   return (
     <>
       <PageHeader
+        icon={FileText}
         title="Volley Reader"
-        description="The articles in the home page carousel, each with its own page. Drafts stay hidden until published."
+        description="The articles in the home page carousel, newest first, each with its own page. Drafts stay hidden until published."
         actions={
-          <button type="button" onClick={() => setEditing(BLANK_ARTICLE)} className={`${button.primary} w-full sm:w-auto`}>
+          <Link href="/articles/new" className={`${button.primary} w-full sm:w-auto`}>
             <Plus className="size-4" /> New article
-          </button>
+          </Link>
         }
       />
 
-      <Toolbar>
+      <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-2xl border border-ink/10 bg-white p-4 sm:flex-row sm:items-center">
         <SearchBox value={search} onChange={setSearch} placeholder="Search articles..." />
-        <CountPill>
-          {shown.length} {shown.length === 1 ? "article" : "articles"}
-        </CountPill>
-      </Toolbar>
-
-      <div className={tableWrap}>
-        <table className="w-full text-left text-sm">
-          <thead className={tableHead}>
-            <tr>
-              <th className={th}>Article</th>
-              <th className={th}>Date line</th>
-              <th className={th}>Status</th>
-              <th className={`${th} text-right`}>Actions</th>
-            </tr>
-          </thead>
-          <tbody className={tbody}>
-            {shown.map((a) => {
-              const i = list.indexOf(a);
-              return (
-                <tr key={a.id} className={row}>
-                  <td className={td}>
-                    <div className="flex items-center gap-4">
-                      <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-bone/60">
-                        {a.image ? (
-                          <img src={siteAsset(a.image)} alt="" className="size-full object-cover" />
-                        ) : (
-                          <FileText className="size-5 text-ink/40" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="max-w-xs truncate font-medium text-ink">{a.title}</p>
-                        <p className="mt-1 max-w-xs truncate text-xs text-ink/50">
-                          {a.location || `/${a.slug}`}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className={`${td} whitespace-nowrap text-ink/60`}>{a.meta || "—"}</td>
-                  <td className={td}>
-                    {a.published ? <Badge tone="lemon">Published</Badge> : <Badge>Draft</Badge>}
-                  </td>
-                  <td className={td}>
-                    <div className="flex justify-end">
-                      {!q && <RowControls index={i} count={list.length} onMove={reorder} />}
-                      {a.published && siteUrl && (
-                        <a
-                          href={`${siteUrl}/volley-reader/${a.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={iconButton}
-                          aria-label="View on the website"
-                        >
-                          <ExternalLink className="size-4" />
-                        </a>
-                      )}
-                      <button type="button" onClick={() => setEditing(a)} className={iconButton} aria-label="Edit">
-                        <Edit2 className="size-4" />
-                      </button>
-                      <button type="button" onClick={() => setDeleting(a)} className={iconButtonDanger} aria-label="Delete">
-                        <Trash2 className="size-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {shown.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-ink/50">
-                  {q ? <>No articles match &quot;{search}&quot;</> : "No articles yet."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <div className="flex shrink-0 items-center gap-3 self-end sm:self-auto">
+          <CountPill>
+            {shown.length} {shown.length === 1 ? "article" : "articles"}
+          </CountPill>
+          <ListViewSwitch view={view} onChange={setView} />
+        </div>
       </div>
 
-      {editing && (
-        <ArticleModal
-          key={editing.id}
-          article={editing}
-          saving={pending}
-          onClose={() => setEditing(null)}
-          onSave={onSave}
-        />
+      <div role="group" aria-label="Filter articles" className="mb-6 flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {STATUS_CHIPS.map((chip) => (
+          <button
+            key={chip.label}
+            type="button"
+            onClick={() => setStatus(chip.value)}
+            aria-pressed={status === chip.value}
+            className={chipClass(status === chip.value)}
+          >
+            {chip.label}
+            <span className={status === chip.value ? "text-bone/60" : "text-ink/35"}>
+              {chip.value ? searched.filter((a) => statusOf(a) === chip.value).length : searched.length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {shown.length > 0 && view === "grid" && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {shown.map((a) => (
+            <div
+              key={a.id}
+              className="group relative overflow-hidden rounded-2xl border border-ink/10 bg-white transition-[border-color,box-shadow] hover:border-ink/25 hover:shadow-soft"
+            >
+              <button
+                type="button"
+                onClick={() => edit(a)}
+                aria-label={`Edit ${a.title}`}
+                className="block w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+              >
+                <div className="relative flex h-60 w-full items-center justify-center overflow-hidden bg-bone/60">
+                  {a.image ? (
+                    <img
+                      src={siteAsset(a.image)}
+                      alt=""
+                      className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    />
+                  ) : (
+                    <FileText className="size-6 text-ink/30" />
+                  )}
+                  <span className="absolute bottom-3 left-3">
+                    {a.published ? <Badge tone="lemon">Published</Badge> : <Badge>Draft</Badge>}
+                  </span>
+                </div>
+                <div className="space-y-2 p-4">
+                  <span className="block truncate font-publish text-xl leading-tight text-ink">{a.title || "Untitled"}</span>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-ink/50">
+                    {byline(a) && <span className="truncate">{byline(a)}</span>}
+                    {a.category && <Badge>{a.category}</Badge>}
+                  </div>
+                </div>
+              </button>
+
+              {/* Actions over the photo: always on a touch screen, on hover from md. */}
+              <div className="absolute top-3 right-3 flex gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100">
+                {viewLink(a, overPhoto)}
+                <button type="button" onClick={() => edit(a)} aria-label={`Edit ${a.title}`} className={overPhoto}>
+                  <Edit2 className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleting(a)}
+                  aria-label={`Delete ${a.title}`}
+                  className={`${overPhoto} hover:text-brick!`}
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {shown.length > 0 && view === "list" && (
+        <div className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-white">
+          {shown.map((a) => (
+            <div key={a.id} className="flex items-center gap-1 bg-white pr-2 transition-colors hover:bg-bone/25 sm:pr-3">
+              <button
+                type="button"
+                onClick={() => edit(a)}
+                aria-label={`Edit ${a.title}`}
+                className="flex min-w-0 flex-1 cursor-pointer items-center gap-4 py-3 pl-4 text-left"
+              >
+                <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-bone/60">
+                  {a.image ? (
+                    <img src={siteAsset(a.image)} alt="" className="size-full object-cover" />
+                  ) : (
+                    <FileText className="size-5 text-ink/40" />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-ink">{a.title || "Untitled"}</span>
+                  <span className="mt-1 block truncate text-xs text-ink/50">{byline(a) || `/${a.slug}`}</span>
+                </span>
+                <span className="hidden shrink-0 items-center gap-2 sm:flex">
+                  {a.category && <Badge>{a.category}</Badge>}
+                  {a.published ? <Badge tone="lemon">Published</Badge> : <Badge>Draft</Badge>}
+                </span>
+              </button>
+              {viewLink(a, iconButton)}
+              <button type="button" onClick={() => edit(a)} className={iconButton} aria-label={`Edit ${a.title}`}>
+                <Edit2 className="size-4" />
+              </button>
+              <button type="button" onClick={() => setDeleting(a)} className={iconButtonDanger} aria-label={`Delete ${a.title}`}>
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {shown.length === 0 && (
+        <div className="rounded-2xl border border-ink/10 bg-white px-6 py-12 text-center text-sm text-ink/50">
+          {list.length === 0 ? (
+            <>
+              No articles yet.{" "}
+              <Link href="/articles/new" className="text-ink/70 underline underline-offset-2 hover:text-ink">
+                Write the first one
+              </Link>
+            </>
+          ) : (
+            <>
+              No articles match.{" "}
+              <button
+                type="button"
+                onClick={clear}
+                className="inline-flex cursor-pointer items-center gap-1 text-ink/70 underline underline-offset-2 hover:text-ink"
+              >
+                <X className="size-3.5" /> Clear the search and filters
+              </button>
+            </>
+          )}
+        </div>
       )}
 
       <ConfirmationModal

@@ -3,6 +3,7 @@
    one. */
 export const CACHE_TAGS = {
   BANNER: "banner",
+  HOME: "home",
   FAQS: "faqs",
   ARTICLES: "articles",
   LOCATIONS: "locations",

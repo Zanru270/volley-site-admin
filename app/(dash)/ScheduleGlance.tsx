@@ -7,8 +7,9 @@ import { tab, tabs } from "@/components/ui";
 import type { ViewingGroup } from "@/lib/types";
 
 /* The dashboard's view of the viewing schedule: one tab per group of days,
-   and that group's windows with the houses and who hosts them. */
-export default function ScheduleGlance({ schedule }: { schedule: ViewingGroup[] }) {
+   and that group's windows with the buildings and who hosts them. */
+// `names`: each building's name as it reads now, by slug ("Brooklyn").
+export default function ScheduleGlance({ schedule, names }: { schedule: ViewingGroup[]; names: Record<string, string> }) {
   const [shown, setShown] = useState(0);
   const group = schedule[shown];
 
@@ -50,8 +51,8 @@ export default function ScheduleGlance({ schedule }: { schedule: ViewingGroup[] 
                 {s.houses.length > 0 && (
                   <span className="shrink-0 rounded-full bg-pink/30 px-2 py-0.5 text-[11px] font-medium text-brick">
                     {s.houses.length === 1
-                      ? s.houses[0].charAt(0).toUpperCase() + s.houses[0].slice(1)
-                      : `${s.houses.length} houses`}
+                      ? (names[s.houses[0]] ?? s.houses[0])
+                      : `${s.houses.length} buildings`}
                   </span>
                 )}
               </li>

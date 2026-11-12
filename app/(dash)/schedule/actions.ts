@@ -9,54 +9,50 @@ import type { Viewings } from "@/lib/types";
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DATE = /^\d{4}-\d\d-\d\d$/;
-const HOUSES = ["brooklyn", "baileys", "roper", "mooiriver"];
-
 /* Checks the whole timetable before saving: a bad time here would quietly
    break the booking calendar on the site. */
-function check(v: Viewings): string | null {
-  for (const [g, group] of v.schedule.entries()) {
-    const name = group.days || `Group ${g + 1}`;
-    if (!group.days.trim()) return `Group ${g + 1} needs a label.`;
-    if (!group.weekdays.length) return `${name}: tick at least one day.`;
-    if (!group.slots.length) return `${name}: add at least one viewing.`;
-    for (const slot of group.slots) {
-      if (!TIME.test(slot.from) || !TIME.test(slot.to))
-        return `${name}: every viewing needs a start and end time.`;
-      if (slot.from >= slot.to)
-        return `${name}: ${slot.from} – ${slot.to} ends before it starts.`;
-      if (!slot.houses.length)
-        return `${name}, ${slot.from}: pick at least one residence.`;
-      if (slot.houses.some((h) => !HOUSES.includes(h)))
-        return `${name}, ${slot.from}: unknown residence.`;
-    }
+function check(v: Viewings, houses: string[]): string | null {
+  for (const [i, w] of v.windows.entries()) {
+    const name = `Viewing ${i + 1}${TIME.test(w.from) ? ` (${w.from})` : ""}`;
+    if (!w.weekdays.length) return `${name}: pick at least one day.`;
+    if (!TIME.test(w.from) || !TIME.test(w.to)) return `${name}: it needs a start and an end time.`;
+    if (w.from >= w.to) return `${name}: it ends before it starts.`;
+    if (!w.houses.length) return `${name}: pick at least one building.`;
+    if (w.houses.some((h) => !houses.includes(h))) return `${name}: one of its buildings no longer exists.`;
   }
   const r = v.rules;
   const whole = (n: number, min: number) => Number.isInteger(n) && n >= min;
-  if (!whole(r.minutes, 5)) return "Viewing length must be at least 5 minutes.";
-  if (!whole(r.step, 5)) return "Time between starts must be at least 5 minutes.";
-  if (!whole(r.noticeHours, 0)) return "Notice must be 0 hours or more.";
-  if (!whole(r.bookAheadDays, 1)) return "Book ahead must be at least 1 day.";
-  if (!whole(r.capacity, 1)) return "Bookings per time must be at least 1.";
+  if (!whole(r.minutes, 5)) return "A viewing needs to last at least 5 minutes.";
+  if (!whole(r.step, 5)) return "Start times need to be at least 5 minutes apart.";
+  if (!whole(r.noticeHours, 0)) return "Notice needs to be 0 hours or more.";
+  if (!whole(r.bookAheadDays, 1)) return "Booking ahead needs to be at least 1 day.";
+  if (!whole(r.capacity, 1)) return "At least 1 person needs to fit in a viewing.";
   if (r.closed.some((d) => !DATE.test(d))) return "Every closed day needs a date.";
   return null;
 }
 
+/* Saves the timetable as its list of viewings (`windows`), and the rules.
+   The older "groups of days" shape isn't written again. */
 export async function saveViewings(input: Viewings): Promise<Result> {
   const { supabase } = await requireAdmin();
   const viewings: Viewings = {
-    schedule: input.schedule.map((g) => ({
-      days: g.days.trim(),
-      weekdays: [...new Set(g.weekdays)].sort(),
-      slots: g.slots
-        .map((s) => ({ ...s, hosts: s.hosts.trim() }))
-        .sort((a, b) => a.from.localeCompare(b.from)),
-    })),
+    windows: input.windows
+      .map((w) => ({
+        weekdays: [...new Set(w.weekdays)].sort(),
+        from: w.from,
+        to: w.to,
+        houses: [...new Set(w.houses)],
+        hosts: w.hosts.trim(),
+      }))
+      .sort((a, b) => a.from.localeCompare(b.from)),
     rules: {
       ...input.rules,
       closed: [...new Set(input.rules.closed.filter(Boolean))].sort(),
     },
   };
-  const problem = check(viewings);
+  const { data: buildings, error } = await supabase.from("locations").select("slug");
+  if (error) return failed(error);
+  const problem = check(viewings, buildings.map((b) => b.slug));
   if (problem) return { ok: false, message: problem };
   try {
     await putSetting(supabase, "viewings", viewings);

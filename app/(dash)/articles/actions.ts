@@ -1,15 +1,18 @@
 "use server";
 
 import { requireAdmin } from "@/lib/auth";
+import { after } from "next/server";
 import { revalidateSite } from "@/lib/revalidate";
+import { sweepUnusedUploads } from "@/lib/media-sweep";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { failed, saved, type Result } from "@/lib/result";
 import type { Article } from "@/lib/types";
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-/* Adds or updates an article. A new one (id "new") goes to the front of
-   the carousel. Returns the saved id. */
+/* Adds or updates an article. Articles show newest first by `date`, so a
+   new one goes wherever its date puts it. Returns the saved id. */
 export async function saveArticle(
   input: Article,
 ): Promise<Result & { id?: string }> {
@@ -18,6 +21,7 @@ export async function saveArticle(
     slug: input.slug.trim(),
     title: input.title.trim(),
     location: input.location.trim(),
+    date: input.date && DATE.test(input.date) ? input.date : null,
     meta: input.meta.trim(),
     category: input.category.trim(),
     excerpt: input.excerpt.trim(),
@@ -39,17 +43,7 @@ export async function saveArticle(
   try {
     let id = input.id;
     if (id === "new") {
-      const { data: first } = await supabase
-        .from("articles")
-        .select("sort")
-        .order("sort")
-        .limit(1)
-        .maybeSingle();
-      const { data, error } = await supabase
-        .from("articles")
-        .insert({ ...article, sort: (first?.sort ?? 0) - 1 })
-        .select("id")
-        .single();
+      const { data, error } = await supabase.from("articles").insert(article).select("id").single();
       if (error) throw error;
       id = data.id;
     } else {
@@ -61,11 +55,21 @@ export async function saveArticle(
       if (error) throw error;
       if (!data.length) throw new Error("not allowed (0 rows saved)");
     }
-    return { ...saved(await revalidateSite(CACHE_TAGS.ARTICLES)), id };
+    after(sweepUnusedUploads);
+    const result = saved(await revalidateSite(CACHE_TAGS.ARTICLES));
+    // A draft isn't on the site, whatever the site was told.
+    if (!article.published) result.message = "Saved as a draft. It isn't on the website.";
+    return { ...result, id };
   } catch (err) {
     const e = err as { code?: string };
     if (e.code === "23505")
       return { ok: false, message: "Another article already uses that URL." };
+    if (e.code === "PGRST204")
+      return {
+        ok: false,
+        message:
+          "Couldn't save: the database needs a one-off update first. Ask whoever set up the admin to run supabase/reader-dates.sql.",
+      };
     return failed(err);
   }
 }
@@ -74,19 +78,5 @@ export async function deleteArticle(id: string): Promise<Result> {
   const { supabase } = await requireAdmin();
   const { error } = await supabase.from("articles").delete().eq("id", id);
   if (error) return failed(error);
-  return saved(await revalidateSite(CACHE_TAGS.ARTICLES));
-}
-
-// Saves the carousel order: `ids` front to back.
-export async function reorderArticles(ids: string[]): Promise<Result> {
-  const { supabase } = await requireAdmin();
-  try {
-    for (const [sort, id] of ids.entries()) {
-      const { error } = await supabase.from("articles").update({ sort }).eq("id", id);
-      if (error) throw error;
-    }
-  } catch (err) {
-    return failed(err);
-  }
   return saved(await revalidateSite(CACHE_TAGS.ARTICLES));
 }
