@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, LogOut, X } from "lucide-react";
+import { ChevronDown, ChevronUp, LogOut, X } from "lucide-react";
 import { ALL_PAGES, HOME, initials, NAV_GROUPS, type NavPage } from "@/components/nav";
 import { confirmNavigation, hasNavigationGuard } from "@/lib/navigation-guard";
 import { startNavigationProgress } from "@/lib/navigation-progress";
@@ -201,15 +201,23 @@ export default function Sidebar({
         aria-modal={isOpen ? "true" : undefined}
         aria-label="Navigation"
         data-expanded={expanded || undefined}
-        // On the editor, clipped to the rail's rounded box or, rolled down,
-        // to the initials' circle in its foot (p-3, size-10) plus 1px for
-        // its ring: both as inset() so the change animates.
+        /* On the editor, clipped to the rail's rounded box or, rolled down,
+           to exactly the initials' circle in its foot (1px border + p-3 =
+           13px in from the left and bottom, size-10, in a 64px rail) with a
+           tab of the rail rising 14px above it, as wide as the circle: a
+           box with its foot rounded to the circle (20px) and its head
+           squarer (9px), holding the arrow up. Both as inset() so the
+           change animates. Rolled down, it also slides
+           to the window's bottom left corner, its foot 12px off the
+           bottom as its side is off the left: from its centre at 50% +
+           28px, that's down by 50vh - 40px less its own height. */
         style={
           isEditor && isDesktop
             ? {
                 clipPath: railHidden
-                  ? "inset(calc(100% - 53px) 11px 11px 11px round 9999px)"
+                  ? "inset(calc(100% - 67px) 11px 13px 13px round 9px 9px 20px 20px)"
                   : "inset(0 0 0 0 round 16px)",
+                translate: railHidden ? "0 calc(50vh - 40px - 100%)" : undefined,
               }
             : undefined
         }
@@ -231,7 +239,7 @@ export default function Sidebar({
         }}
         className={[
           "fixed z-60 flex flex-col overflow-hidden border border-ink/10 bg-bone/95 backdrop-blur-xl",
-          "transition-[width,transform,box-shadow,clip-path] duration-200 ease-out",
+          "transition-[width,transform,translate,box-shadow,clip-path] duration-200 ease-out",
           // Rolling down into the initials, and back up.
           isEditor ? "md:duration-300 motion-reduce:transition-none" : "",
           // The phone's drawer
@@ -318,6 +326,24 @@ export default function Sidebar({
           ))}
         </nav>
 
+        {/* The rolled-down rail's tab over the initials: an arrow up, which
+            rolls it back up as the initials do. Hidden from screen readers
+            and Tab, which have the initials' button for that. */}
+        {isEditor && (
+          <button
+            type="button"
+            onClick={() => collapseRail(false)}
+            aria-hidden="true"
+            tabIndex={-1}
+            className={`absolute bottom-[53px] left-[13px] flex h-3.5 w-10 cursor-pointer items-center justify-center text-ink/45 transition-[color,opacity] hover:text-ink ${
+              railHidden ? "opacity-100 delay-150" : "pointer-events-none opacity-0"
+            }`}
+          >
+            {/* A touch below centre, nearer the circle. */}
+            <ChevronUp className="size-[11px] translate-y-[3px]" strokeWidth={2.75} />
+          </button>
+        )}
+
         {/* Who's signed in, and signing out. */}
         <div
           className={`shrink-0 border-t p-3 transition-colors duration-300 ${
@@ -332,7 +358,9 @@ export default function Sidebar({
                   type="button"
                   onClick={() => collapseRail(false)}
                   aria-label="Show the menu"
-                  className={`flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-ink font-publish text-xs text-lemon ring-1 ring-ink/20 transition-transform select-none hover:scale-105 ${focusRing}`}
+                  // No ring or hover growth: the rail is clipped to exactly
+                  // this circle, and would cut either off.
+                  className={`flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-ink font-publish text-xs text-lemon transition-colors select-none hover:bg-black ${focusRing}`}
                 >
                   {initials(name || email)}
                 </button>
