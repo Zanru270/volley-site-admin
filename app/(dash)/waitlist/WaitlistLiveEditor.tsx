@@ -14,6 +14,7 @@ import {
   type Device,
 } from "@/components/live-editor/editorShell";
 import { confirmNavigation, useLeaveGuard } from "@/lib/navigation-guard";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 import { applyInlineEdit, WAITLIST_NOT_INLINE, type FrameRect, type WaitlistField } from "@/lib/live-editor";
 import type { PreviewToken } from "@/lib/preview-token";
 import type { WaitlistForm } from "@/lib/types";
@@ -91,7 +92,9 @@ export default function WaitlistLiveEditor({ initial, preview }: { initial: Wait
 
   useLeaveGuard(dirty);
   const leave = async (href: string) => {
-    if (await confirmNavigation()) router.push(href);
+    if (!(await confirmNavigation())) return;
+    startNavigationProgress(href);
+    router.push(href);
   };
 
   return (

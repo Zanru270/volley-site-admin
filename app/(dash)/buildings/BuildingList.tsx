@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- the website's own photos */
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 import {
   BedSingle,
   Building2,
@@ -95,7 +96,10 @@ export default function BuildingList({
 
   // A building opens in its live editor, as a Bow + Arc project does.
   const router = useRouter();
-  const open = (b: Location) => router.push(`/buildings/${b.slug}`);
+  const open = (b: Location) => {
+    startNavigationProgress(`/buildings/${b.slug}`);
+    router.push(`/buildings/${b.slug}`);
+  };
 
   /* A building's card, edited in a panel here, as on the home page:
      Save saves only the card (saveBuildingCard). Its visibility saves as
@@ -145,6 +149,7 @@ export default function BuildingList({
       const result = await createBuilding(draft);
       if (!result.ok || !result.slug) return toast.result(result);
       toast.success(`Volley ${draft.name.trim().replace(/^volley\s+/i, "")} added`, "It's a draft, hidden on the website until you change that.");
+      startNavigationProgress(`/buildings/${result.slug}`);
       router.push(`/buildings/${result.slug}`);
     });
 

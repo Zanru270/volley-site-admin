@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, LogOut, X } from "lucide-react";
 import { ALL_PAGES, HOME, initials, NAV_GROUPS, type NavPage } from "@/components/nav";
 import { confirmNavigation, hasNavigationGuard } from "@/lib/navigation-guard";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 
 /* The sidebar, working as the Bow + Arc CMS's does. From md up it floats
    over the page as a slim rail of icons and widens over the content while
@@ -142,7 +143,11 @@ export default function Sidebar({
     if (!hasNavigationGuard()) return;
     e.preventDefault();
     const href = e.currentTarget.getAttribute("href") ?? "/";
-    void confirmNavigation().then((ok) => ok && router.push(href));
+    void confirmNavigation().then((ok) => {
+      if (!ok) return;
+      startNavigationProgress(href);
+      router.push(href);
+    });
   };
 
   // The page you're on, or under; of two that both fit (/waitlist and

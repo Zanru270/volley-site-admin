@@ -17,6 +17,7 @@ import {
   type Device,
 } from "@/components/live-editor/editorShell";
 import { confirmNavigation, useLeaveGuard } from "@/lib/navigation-guard";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 import { applyInlineEdit, LOCATION_NOT_INLINE, type FrameRect, type LocationField } from "@/lib/live-editor";
 import { deleteUploads } from "@/lib/media-actions";
 import { photoUrls } from "@/lib/photos";
@@ -266,7 +267,9 @@ export default function BuildingLiveEditor({
 
   useLeaveGuard(dirty);
   const leave = async (href: string) => {
-    if (await confirmNavigation()) router.push(href);
+    if (!(await confirmNavigation())) return;
+    startNavigationProgress(href);
+    router.push(href);
   };
 
   // Saves the draft.

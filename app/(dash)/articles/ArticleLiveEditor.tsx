@@ -17,6 +17,7 @@ import {
   type Device,
 } from "@/components/live-editor/editorShell";
 import { confirmNavigation, useLeaveGuard } from "@/lib/navigation-guard";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 import { applyInlineEdit, ARTICLE_NOT_INLINE, type ArticleField, type BlockAction, type FrameRect } from "@/lib/live-editor";
 import { move } from "@/components/Sortable";
 import type { PreviewToken } from "@/lib/preview-token";
@@ -182,7 +183,9 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
 
   useLeaveGuard(dirty);
   const leave = async (href: string) => {
-    if (await confirmNavigation()) router.push(href);
+    if (!(await confirmNavigation())) return;
+    startNavigationProgress(href);
+    router.push(href);
   };
 
   /* Saves `article` (the draft), live on
@@ -215,7 +218,9 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
     start(async () => {
       const result = await deleteArticle(saved.id);
       toast.result(result, "Article deleted");
-      if (result.ok) router.push("/articles");
+      if (!result.ok) return;
+      startNavigationProgress("/articles");
+      router.push("/articles");
     });
   };
 

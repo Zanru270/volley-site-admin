@@ -17,6 +17,7 @@ import {
   type Device,
 } from "@/components/live-editor/editorShell";
 import { confirmNavigation, useLeaveGuard } from "@/lib/navigation-guard";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 import { applyInlineEdit, HOME_NOT_INLINE, type FrameRect, type HomeField } from "@/lib/live-editor";
 import type { PreviewToken } from "@/lib/preview-token";
 import { deleteUploads } from "@/lib/media-actions";
@@ -302,7 +303,9 @@ export default function HomeLiveEditor({
   useLeaveGuard(dirty);
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
   const leave = async (href: string) => {
-    if (await confirmNavigation()) router.push(href);
+    if (!(await confirmNavigation())) return;
+    startNavigationProgress(href);
+    router.push(href);
   };
 
   // A card whose content lives on another page of the admin.

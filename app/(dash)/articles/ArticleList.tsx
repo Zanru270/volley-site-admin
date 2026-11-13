@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 import {
   Edit2,
   ExternalLink,
@@ -73,7 +74,10 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
     setDeleting(null);
   };
 
-  const edit = (a: Article) => router.push(`/articles/${a.id}`);
+  const edit = (a: Article) => {
+    startNavigationProgress(`/articles/${a.id}`);
+    router.push(`/articles/${a.id}`);
+  };
   const byline = (a: Article) => [a.location, articleDate(a)].filter(Boolean).join(" | ");
   const viewLink = (a: Article, className: string) =>
     a.published &&
