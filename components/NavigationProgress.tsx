@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { hasNavigationGuard } from "@/lib/navigation-guard";
 import { onNavigationStart, startNavigationProgress } from "@/lib/navigation-progress";
 
-/* A thin ink bar along the top of the window while the next page loads.
+/* A thin lemon bar along the top of the window while the next page loads.
    Next doesn't say how far along a page is, so the bar jumps a little way
    at once, then creeps toward 90% (slower the further it gets), and runs to
    the end when the new page arrives. If none arrives in 15 seconds it
@@ -80,12 +80,12 @@ export default function NavigationProgress() {
   return (
     <div
       aria-hidden
-      className={`pointer-events-none fixed inset-x-0 top-0 z-100 h-0.5 transition-opacity duration-300 ${
+      className={`pointer-events-none fixed inset-x-0 top-0 z-100 h-1transition-opacity duration-300 ${
         visible ? "opacity-100" : "opacity-0"
       }`}
     >
       <div
-        className="h-full bg-ink transition-[width] duration-200 ease-out motion-reduce:transition-none"
+        className="h-full bg-lemon transition-[width] duration-200 ease-out motion-reduce:transition-none"
         style={{ width: `${width}%` }}
       />
     </div>
