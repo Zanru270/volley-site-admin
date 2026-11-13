@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element -- a signed link to a private photo */
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Archive,
@@ -95,7 +95,7 @@ const dateTime = (iso: string) =>
    `buildings` and `unitTypes`: what Accept and Interview can offer (the
    website's buildings, and the form's unit types). */
 export default function ApplicationsList({
-  entries,
+  entries: saved,
   placements,
   accounts,
   buildings,
@@ -114,6 +114,12 @@ export default function ApplicationsList({
   initialOpen?: string;
 }) {
   const router = useRouter();
+  /* A mark that sends no email (new, contacted, closed) shows at once, and
+     goes back if it couldn't be saved. Interview, Accept and Decline wait
+     for their emails to go. */
+  const [entries, showStatus] = useOptimistic(saved, (all, { id, status }: { id: string; status: string }) =>
+    all.map((e) => (e.id === id ? { ...e, status } : e)),
+  );
   const startOn = entries.find((e) => e.id === initialOpen);
   const [tab, setTab] = useState<WaitlistTab>(() =>
     !startOn ? "new" : startOn.status === "offered" ? "contacted" : ((WAITLIST_TABS as readonly string[]).includes(startOn.status) ? (startOn.status as WaitlistTab) : "all"),
@@ -154,7 +160,9 @@ export default function ApplicationsList({
   ];
 
   const mark = (e: WaitlistEntry, status: string) =>
-    run(() => setWaitlistStatus(e.id, status), `Marked ${statusLabel(status).toLowerCase()}`).then((ok) => ok && router.refresh());
+    run(() => setWaitlistStatus(e.id, status), `Marked ${statusLabel(status).toLowerCase()}`, undefined, () =>
+      showStatus({ id: e.id, status }),
+    );
   const openDecision = (entry: WaitlistEntry, kind: EmailKind) =>
     kind === "accept" && accounts ? setPlacing(entry) : setEmailing({ entry, kind });
 

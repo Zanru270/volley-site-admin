@@ -110,14 +110,18 @@ export function usePreviewFrame<P extends PreviewPage>({
   onMessage: (message: Exclude<PreviewMessage<P>, { type: "ready" }>) => void;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  // The first token, kept: a save re-renders the page and mints a new one,
+  // which would change the address and reload the frame. The frame only
+  // checks it as it loads.
+  const [token] = useState(preview);
   const previewError = !SITE_ORIGIN
     ? "NEXT_PUBLIC_SITE_URL isn't set."
-    : "error" in preview
-      ? preview.error
+    : "error" in token
+      ? token.error
       : null;
   const previewUrl =
-    SITE_ORIGIN && "token" in preview
-      ? `${SITE_ORIGIN}/preview/${page}?token=${encodeURIComponent(preview.token)}${query}`
+    SITE_ORIGIN && "token" in token
+      ? `${SITE_ORIGIN}/preview/${page}?token=${encodeURIComponent(token.token)}${query}`
       : null;
   const [previewReady, setPreviewReady] = useState(false);
   const draftRef = useRef(draft);

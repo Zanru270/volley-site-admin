@@ -18,6 +18,7 @@ import {
 } from "@/components/live-editor/editorShell";
 import { confirmNavigation, useLeaveGuard } from "@/lib/navigation-guard";
 import { startNavigationProgress } from "@/lib/navigation-progress";
+import { useDraftBackup, useSaveWhenOnline } from "@/lib/offline";
 import { applyInlineEdit, LOCATION_NOT_INLINE, type FrameRect, type LocationField } from "@/lib/live-editor";
 import { deleteUploads } from "@/lib/media-actions";
 import { photoUrls } from "@/lib/photos";
@@ -265,6 +266,8 @@ export default function BuildingLiveEditor({
     };
   }, [active, openCard]);
 
+  // Unsaved changes kept on this device.
+  useDraftBackup(`building:${initial.slug}`, draft, saved, setDraft);
   useLeaveGuard(dirty);
   const leave = async (href: string) => {
     if (!(await confirmNavigation())) return;
@@ -285,6 +288,8 @@ export default function BuildingLiveEditor({
         toast.error("Not saved", (err as Error).message);
       }
     });
+  // Save waits out a lost connection.
+  const saveOnline = useSaveWhenOnline(() => save());
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
@@ -453,7 +458,7 @@ export default function BuildingLiveEditor({
             </button>
           </>
         }
-        save={<SaveButton dirty={dirty} pending={pending} label="Save" onClick={() => save()} />}
+        save={<SaveButton dirty={dirty} pending={pending} waiting={saveOnline.waiting} label="Save" onClick={saveOnline.save} />}
       />
 
       <PreviewCanvas

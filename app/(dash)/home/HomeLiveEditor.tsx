@@ -18,6 +18,7 @@ import {
 } from "@/components/live-editor/editorShell";
 import { confirmNavigation, useLeaveGuard } from "@/lib/navigation-guard";
 import { startNavigationProgress } from "@/lib/navigation-progress";
+import { useDraftBackup, useSaveWhenOnline } from "@/lib/offline";
 import { applyInlineEdit, HOME_NOT_INLINE, type FrameRect, type HomeField } from "@/lib/live-editor";
 import type { PreviewToken } from "@/lib/preview-token";
 import { deleteUploads } from "@/lib/media-actions";
@@ -300,6 +301,19 @@ export default function HomeLiveEditor({
     };
   }, [active, openCard]);
 
+  /* Unsaved changes (the page, the banner and the cards, together) kept on
+     this device; Save waits out a lost connection. */
+  useDraftBackup(
+    "home",
+    { home, banner, cards },
+    { home: page.saved, banner: bannerForm.saved, cards: savedCards },
+    (kept) => {
+      setValue(kept.home);
+      bannerForm.setValue(kept.banner);
+      setCards(kept.cards);
+    },
+  );
+  const saveOnline = useSaveWhenOnline(save);
   useLeaveGuard(dirty);
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
   const leave = async (href: string) => {
@@ -463,7 +477,7 @@ export default function HomeLiveEditor({
         formOpen={active === "form"}
         onForm={() => openCard(active === "form" ? null : "form")}
         formTitle="Every section of the home page as a form"
-        save={<SaveButton dirty={dirty} pending={pending} label="Save" onClick={save} />}
+        save={<SaveButton dirty={dirty} pending={pending} waiting={saveOnline.waiting} label="Save" onClick={saveOnline.save} />}
       />
 
       <PreviewCanvas

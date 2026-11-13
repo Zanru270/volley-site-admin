@@ -9,6 +9,7 @@ import { ALL_PAGES, initials } from "@/components/nav";
 import { confirmNavigation } from "@/lib/navigation-guard";
 import { startNavigationProgress } from "@/lib/navigation-progress";
 import NavigationProgress from "@/components/NavigationProgress";
+import OfflineNotice from "@/components/OfflineNotice";
 
 /* The admin's frame: the bone canvas, the page on a rounded white sheet
    with a top bar, and the sidebar floating over its left edge as a rail
@@ -48,6 +49,7 @@ export default function Frame({
   return (
     <div className="min-h-screen bg-bone">
       <NavigationProgress />
+      <OfflineNotice />
       <Sidebar
         name={name}
         email={email}

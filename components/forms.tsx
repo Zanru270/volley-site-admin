@@ -38,21 +38,28 @@ export function useSettingsForm<T>(initial: T, action: (value: T) => Promise<Res
 
   const reset = () => setValue(saved);
 
-  return { value, setValue, dirty, pending, save, reset };
+  return { value, setValue, saved, dirty, pending, save, reset };
 }
 
 /* Runs a server action from a list page (save from a drawer, delete,
    reorder): toasts the outcome (with `action` on the toast, e.g. Undo) and
    refreshes the page's data. Resolves to whether it worked, so the caller
-   can close its drawer. */
+   can close its drawer.
+
+   `show`, when given, puts the outcome on screen straight away (a
+   useOptimistic setter: the row gone, the new status), before the server
+   answers. React drops it when the action ends: for the refreshed data if
+   it worked, for what was there if it didn't. Never for an action that
+   emails anyone; that waits until it's done. */
 export function useAction() {
   const toast = useToast();
   const router = useRouter();
   const [pending, start] = useTransition();
 
-  const run = (action: () => Promise<Result>, title?: string, toastAction?: ToastAction) =>
+  const run = (action: () => Promise<Result>, title?: string, toastAction?: ToastAction, show?: () => void) =>
     new Promise<boolean>((resolve) =>
       start(async () => {
+        show?.();
         try {
           const result = await action();
           toast.result(result, title, toastAction);

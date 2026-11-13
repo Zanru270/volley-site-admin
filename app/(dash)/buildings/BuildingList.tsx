@@ -12,7 +12,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { Badge, button, CountPill, Field, iconButton, inputClass, PageHeader, SearchBox } from "@/components/ui";
+import { Badge, button, CountPill, Field, iconButton, inputClass, PageHeader, press, SearchBox } from "@/components/ui";
 import EditModal from "@/components/EditModal";
 import { useToast } from "@/components/ToastProvider";
 import { RowControls, useAction } from "@/components/forms";
@@ -55,7 +55,7 @@ const StatusBadge = ({ building }: { building: Location }) => (
 
 // A filter chip with its count, as on the Bow + Arc CMS's Projects page.
 const chipClass = (active: boolean) =>
-  `inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+  `inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium ${press} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
     active
       ? "border-ink bg-ink text-bone"
       : "border-ink/12 bg-white text-ink/60 hover:border-ink/30 hover:text-ink"
@@ -414,7 +414,7 @@ export default function BuildingList({
                   type="button"
                   onClick={() => open(b)}
                   aria-label={`Edit ${nameOf(b)}`}
-                  className="inline-flex cursor-pointer items-center justify-center rounded-full bg-white/90 p-2 text-ink/60 shadow-soft transition-colors hover:bg-white hover:text-ink"
+                  className={`inline-flex cursor-pointer items-center justify-center rounded-full bg-white/90 p-2 text-ink/60 shadow-soft ${press} active:scale-[0.86] hover:bg-white hover:text-ink`}
                 >
                   <Edit2 className="size-4" />
                 </button>

@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidatePath } from "next/cache";
 import type { CacheTag } from "@/lib/cache-tags";
 
 /* Tells the public site that some content changed, so it drops its cached
@@ -9,6 +10,9 @@ import type { CacheTag } from "@/lib/cache-tags";
    still worked; the site will catch up within the hour on its own. In
    local development LOCAL_SITE_URL is pinged too, best effort. */
 export async function revalidateSite(...tags: CacheTag[]): Promise<boolean> {
+  // The admin's own screens, kept a minute in the browser (staleTimes in
+  // next.config.ts), are dropped too, so none shows what was there before.
+  revalidatePath("/", "layout");
   const site = process.env.MAIN_SITE_URL;
   const secret = process.env.REVALIDATE_SECRET;
   if (!site || !secret) {

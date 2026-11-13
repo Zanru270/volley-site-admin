@@ -15,6 +15,7 @@ import {
 } from "@/components/live-editor/editorShell";
 import { confirmNavigation, useLeaveGuard } from "@/lib/navigation-guard";
 import { startNavigationProgress } from "@/lib/navigation-progress";
+import { useDraftBackup, useSaveWhenOnline } from "@/lib/offline";
 import { applyInlineEdit, WAITLIST_NOT_INLINE, type FrameRect, type WaitlistField } from "@/lib/live-editor";
 import type { PreviewToken } from "@/lib/preview-token";
 import type { WaitlistForm } from "@/lib/types";
@@ -41,7 +42,7 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
    Nothing reaches the website until Save. */
 export default function WaitlistLiveEditor({ initial, preview }: { initial: WaitlistForm; preview: PreviewToken }) {
   const router = useRouter();
-  const { value: draft, setValue, dirty, pending, save } = useSettingsForm(initial, saveWaitlistForm);
+  const { value: draft, setValue, saved, dirty, pending, save } = useSettingsForm(initial, saveWaitlistForm);
   const [device, setDevice] = useState<Device>("desktop");
   const [active, setActive] = useState<Card | null>(null);
   const [anchor, setAnchor] = useState<FrameRect | null>(null);
@@ -90,6 +91,9 @@ export default function WaitlistLiveEditor({ initial, preview }: { initial: Wait
     };
   }, []);
 
+  // Unsaved changes kept on this device; Save waits out a lost connection.
+  useDraftBackup("waitlist-form", draft, saved, setValue);
+  const saveOnline = useSaveWhenOnline(() => save());
   useLeaveGuard(dirty);
   const leave = async (href: string) => {
     if (!(await confirmNavigation())) return;
@@ -111,7 +115,7 @@ export default function WaitlistLiveEditor({ initial, preview }: { initial: Wait
         formOpen={active === "form"}
         onForm={() => openCard(active === "form" ? null : "form")}
         formTitle="All of the form's wording as a form"
-        save={<SaveButton dirty={dirty} pending={pending} label="Save" onClick={() => save()} />}
+        save={<SaveButton dirty={dirty} pending={pending} waiting={saveOnline.waiting} label="Save" onClick={saveOnline.save} />}
       />
 
       <PreviewCanvas

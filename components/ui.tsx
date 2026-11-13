@@ -12,8 +12,15 @@ export const textareaClass = `${inputClass} mt-1 p-3 leading-relaxed`;
 
 export const labelClass = "block text-[13px] font-medium text-ink/70";
 
+/* The press: a control sinks quickly under a click or tap and springs back
+   with a little overshoot when let go, so it answers before whatever it
+   starts does. Colours ease as before; only the size springs. Not while
+   disabled, nor for anyone who has asked for less motion. */
+export const press =
+  "[transition:color_150ms,background-color_150ms,border-color_150ms,box-shadow_150ms,scale_400ms_cubic-bezier(0.34,1.9,0.64,1)] active:scale-[0.93] active:[transition:scale_70ms_ease-out] disabled:active:scale-100 motion-reduce:active:scale-100";
+
 const buttonBase =
-  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-60";
+  `inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg text-sm font-medium ${press} focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-60`;
 export const button = {
   primary: `${buttonBase} bg-black px-4 py-2.5 text-bone hover:bg-ink`,
   secondary: `${buttonBase} border border-ink/15 bg-white px-4 py-2.5 text-ink hover:border-ink/40`,
@@ -24,7 +31,7 @@ export const button = {
 
 // The small icon buttons in table rows: edit, delete, reorder.
 export const iconButton =
-  "inline-flex cursor-pointer items-center justify-center rounded-lg p-2 text-ink/40 transition-colors hover:bg-bone/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent";
+  `inline-flex cursor-pointer items-center justify-center rounded-lg p-2 text-ink/40 ${press} active:scale-[0.86] hover:bg-bone/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent`;
 export const iconButtonDanger = `${iconButton} hover:bg-pink/30! hover:text-brick!`;
 
 /* A page's heading: its title, optionally beside its icon on an ink tile
@@ -152,37 +159,48 @@ export function Field({
 
 /* The section header's save button. It reads "Saved" (with a tick, and
    does nothing) until something changes, then becomes the save action. */
+/* `waiting`: pressed while offline, it saves when the connection's back
+   (useSaveWhenOnline in lib/offline.ts). It's never disabled, so it always
+   gives under a press; it only saves when there's something to save and
+   no save already going. */
 export function SaveButton({
   dirty,
   pending,
+  waiting = false,
   label = "Save",
   onClick,
 }: {
   dirty: boolean;
   pending: boolean;
+  waiting?: boolean;
   label?: string;
   onClick?: () => void;
 }) {
   const idle = !dirty && !pending;
+  const canSave = dirty && !pending && !waiting;
   return (
     <button
       type={onClick ? "button" : "submit"}
-      onClick={onClick}
-      disabled={!dirty || pending}
+      onClick={(e) => {
+        if (!canSave) e.preventDefault();
+        else onClick?.();
+      }}
+      aria-disabled={!canSave}
+      title={waiting ? "Saves as soon as you're back online" : undefined}
       className={
         idle
-          ? "inline-flex cursor-default items-center gap-1.5 rounded-full bg-lemon/50 px-3 py-1.5 text-xs font-medium text-green"
-          : `${button.primary} py-2! disabled:cursor-wait`
+          ? `inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-lemon/50 px-3 py-1.5 text-xs font-medium text-green ${press}`
+          : `${button.primary} py-2! ${canSave ? "" : "cursor-wait opacity-75"}`
       }
     >
-      {pending ? (
+      {pending || waiting ? (
         <Loader2 className="size-4 animate-spin" />
       ) : dirty ? (
         <Save className="size-4" />
       ) : (
         <Check className="size-3.5" />
       )}
-      {pending ? "Saving…" : dirty ? label : "Saved"}
+      {pending ? "Saving…" : waiting ? "Saves when online" : dirty ? label : "Saved"}
     </button>
   );
 }
@@ -296,7 +314,7 @@ export function SearchBox({
 // Filter tabs: a segmented control on a bone track.
 export const tabs = "flex w-full gap-1 overflow-x-auto rounded-xl bg-bone/60 p-1 sm:w-fit";
 export const tab = (active: boolean) =>
-  `shrink-0 cursor-pointer rounded-lg px-4 py-1.5 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+  `shrink-0 cursor-pointer rounded-lg px-4 py-1.5 text-[13px] ${press} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
     active ? "bg-white font-medium text-ink shadow-soft" : "text-ink/55 hover:text-ink"
   }`;
 

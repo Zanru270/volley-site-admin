@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useOptimistic, useState, type FormEvent } from "react";
 import { Edit2, Plus, Trash2, User, Users } from "lucide-react";
 import {
   Badge,
@@ -39,7 +39,9 @@ const BLANK = { email: "", name: "", password: "" };
 /* Everyone who can sign in, like the Bow + Arc CMS's admin list in
    Settings: add someone, or change their name or password, in the drawer;
    remove them after a confirm. */
-export default function TeamEditor({ admins, me }: { admins: Admin[]; me: string }) {
+export default function TeamEditor({ admins: saved, me }: { admins: Admin[]; me: string }) {
+  // Someone removed goes from the list at once, and comes back if they couldn't be.
+  const [admins, hide] = useOptimistic(saved, (all, email: string) => all.filter((a) => a.email !== email));
   // The drawer: adding someone, or editing who's in `editing`.
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Admin | null>(null);
@@ -67,8 +69,9 @@ export default function TeamEditor({ admins, me }: { admins: Admin[]; me: string
 
   const onRemove = async () => {
     if (!removing) return;
-    await run(() => removeAdmin(removing.email), "Removed from the team");
+    const { email } = removing;
     setRemoving(null);
+    await run(() => removeAdmin(email), "Removed from the team", undefined, () => hide(email));
   };
 
   return (

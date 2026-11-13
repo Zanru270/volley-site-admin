@@ -8,6 +8,7 @@ import EditModal from "@/components/EditModal";
 import CustomSelect from "@/components/CustomSelect";
 import { StringList, useSettingsForm } from "@/components/forms";
 import { useLeaveGuard } from "@/lib/navigation-guard";
+import { useDraftBackup, useSaveWhenOnline } from "@/lib/offline";
 import type { ViewingWindow, Viewings } from "@/lib/types";
 import { DAY_NAMES, daysLabel, WEEK } from "@/lib/viewings";
 import { saveViewings } from "./actions";
@@ -83,8 +84,11 @@ export default function ScheduleEditor({
   initial: Viewings;
   houses: { slug: string; name: string }[];
 }) {
-  const { value: v, setValue: setV, dirty, pending, save, reset } = useSettingsForm(initial, saveViewings);
+  const { value: v, setValue: setV, saved, dirty, pending, save, reset } = useSettingsForm(initial, saveViewings);
   useLeaveGuard(dirty);
+  // Unsaved changes kept on this device; Save waits out a lost connection.
+  useDraftBackup("schedule", v, saved, setV);
+  const saveOnline = useSaveWhenOnline(save);
 
   const nameOf = (slug: string) => houses.find((h) => h.slug === slug)?.name ?? slug;
   const toneOf = (slug: string) => TONES[Math.max(0, houses.findIndex((h) => h.slug === slug)) % TONES.length];
@@ -353,7 +357,7 @@ export default function ScheduleEditor({
         )}
       </EditModal>
 
-      <SaveBar dirty={dirty} pending={pending} onSave={save} onDiscard={reset} />
+      <SaveBar dirty={dirty} pending={pending} waiting={saveOnline.waiting} onSave={saveOnline.save} onDiscard={reset} />
     </div>
   );
 }

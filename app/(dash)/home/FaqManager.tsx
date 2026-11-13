@@ -86,10 +86,14 @@ export default function FaqManager({ initial }: { initial: FaqRow[] }) {
     if (await persist(next, exists ? "Question saved" : "Question added")) setEditing(null);
   };
 
+  // Gone at once; back in its place if it couldn't be deleted.
   const onDelete = async () => {
     if (!deleting) return;
-    await persist(rows.filter((r) => r.id !== deleting.id), "Question deleted");
+    const before = rows;
+    const next = rows.filter((r) => r.id !== deleting.id);
     setDeleting(null);
+    setRows(next);
+    if (!(await run(() => saveFaqs(next), "Question deleted"))) setRows(before);
   };
 
   if (editing)

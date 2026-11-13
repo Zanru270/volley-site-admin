@@ -8,15 +8,18 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 /* The form pages' one save (the schedule, the waitlist form, the home
    page's form view): a bar floating at the foot of the window that comes up
    once something changes, with Discard (after a confirm) and Save. Nothing
-   on these pages saves until it's pressed. */
+   on these pages saves until it's pressed. `waiting`: pressed while
+   offline, it saves once the connection's back (lib/offline.ts). */
 export default function SaveBar({
   dirty,
   pending,
+  waiting = false,
   onSave,
   onDiscard,
 }: {
   dirty: boolean;
   pending: boolean;
+  waiting?: boolean;
   onSave: () => void;
   onDiscard: () => void;
 }) {
@@ -39,13 +42,19 @@ export default function SaveBar({
         >
           <span className="flex min-w-0 flex-1 items-center gap-2 text-sm text-ink">
             <span className="size-1.5 shrink-0 rounded-full bg-brick" />
-            <span className="truncate">{pending ? "Saving your changes…" : "You have unsaved changes"}</span>
+            <span className="truncate">{pending ? "Saving your changes…" : waiting ? "Saves when you're back online" : "You have unsaved changes"}</span>
           </span>
           <button type="button" onClick={() => setConfirming(true)} disabled={pending} className={button.ghost}>
             Discard
           </button>
-          <button type="button" onClick={onSave} disabled={pending} className={`${button.primary} py-2!`}>
-            {pending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          <button
+            type="button"
+            // Always gives under a press; saves only when one isn't already going.
+            onClick={() => !pending && !waiting && onSave()}
+            aria-disabled={pending || waiting}
+            className={`${button.primary} py-2! ${pending || waiting ? "cursor-wait opacity-75" : ""}`}
+          >
+            {pending || waiting ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
             {pending ? "Saving…" : "Save"}
           </button>
         </div>

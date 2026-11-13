@@ -25,7 +25,8 @@ const labelOf = (value: Visibility) => VISIBILITIES.find((v) => v.value === valu
    Save as usual. Back to what it was if the save fails.
 
    Controlled, so every copy of it agrees: `value` in (the choice, "auto"
-   for Automatic), `onChange` out once it's saved. `status` is the one
+   for Automatic), `onChange` out the moment it's picked (and again with
+   the old choice if the save fails). `status` is the one
    shown beside it, saved or not, for what Automatic comes to. As a "bar"
    button in the editor's top bar, or a "field" under the card's status.
 
@@ -101,10 +102,18 @@ export default function VisibilitySelect({
     setOpen(false);
     buttonRef.current?.focus();
     if (next === value) return;
+    // Shows at once; goes back if it couldn't be saved.
+    const before = value;
+    onChange(next);
     start(async () => {
-      const result = await saveBuildingVisibility(slug, next);
-      if (result.ok) onChange(next);
-      toast.result(result, `On the website: ${labelOf(effectiveVisibility(status, next))}${next === "auto" ? " (automatic)" : ""}`);
+      try {
+        const result = await saveBuildingVisibility(slug, next);
+        if (!result.ok) onChange(before);
+        toast.result(result, `On the website: ${labelOf(effectiveVisibility(status, next))}${next === "auto" ? " (automatic)" : ""}`);
+      } catch (err) {
+        onChange(before);
+        toast.error("Not saved", (err as Error).message);
+      }
     });
   };
 

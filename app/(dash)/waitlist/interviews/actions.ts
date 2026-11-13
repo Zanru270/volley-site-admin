@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { getSetting, putSetting } from "@/lib/settings";
 import { appSupabase } from "@/lib/appSupabase";
@@ -43,6 +44,8 @@ export async function saveInterviewSettings(input: InterviewSettings): Promise<R
   } catch (err) {
     return failed(err);
   }
+  // Applications offers these too; its kept copy is dropped.
+  revalidatePath("/", "layout");
   return { ok: true, message: "Saved." };
 }
 

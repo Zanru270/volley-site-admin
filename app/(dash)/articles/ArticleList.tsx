@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element -- previews of arbitrary URLs */
-import { useState } from "react";
+import { useOptimistic, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startNavigationProgress } from "@/lib/navigation-progress";
@@ -13,7 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { Badge, button, CountPill, iconButton, iconButtonDanger, PageHeader, SearchBox } from "@/components/ui";
+import { Badge, button, CountPill, iconButton, iconButtonDanger, PageHeader, press, SearchBox } from "@/components/ui";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import ListViewSwitch from "@/components/ListViewSwitch";
 import { useAction } from "@/components/forms";
@@ -33,14 +33,14 @@ const statusOf = (a: Article): Status => (a.published ? "published" : "draft");
 
 // A filter chip with its count, as on the Bow + Arc CMS's News & Views page.
 const chipClass = (active: boolean) =>
-  `inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+  `inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium ${press} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
     active
       ? "border-ink bg-ink text-bone"
       : "border-ink/12 bg-white text-ink/60 hover:border-ink/30 hover:text-ink"
   }`;
 
 const overPhoto =
-  "inline-flex cursor-pointer items-center justify-center rounded-full bg-white/90 p-2 text-ink/60 shadow-soft transition-colors hover:bg-white hover:text-ink";
+  `inline-flex cursor-pointer items-center justify-center rounded-full bg-white/90 p-2 text-ink/60 shadow-soft ${press} active:scale-[0.86] hover:bg-white hover:text-ink`;
 
 /* The Volley Reader, laid out like the Bow + Arc CMS's News & Views page: a
    toolbar (search, a count, grid or list), published / draft chips, then a
@@ -49,8 +49,9 @@ const overPhoto =
    the order the website shows them in; `initial` comes sorted. */
 export default function ArticleList({ initial }: { initial: Article[] }) {
   const router = useRouter();
-  // Fresh from the server after every change (router.refresh).
-  const list = initial;
+  /* Fresh from the server after every change (router.refresh); a deleted
+     article goes from it at once, and comes back if it couldn't be. */
+  const [list, hide] = useOptimistic(initial, (all, id: string) => all.filter((a) => a.id !== id));
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<Status | null>(null);
   const [view, setView] = useListView("admin-articles-view");
@@ -70,8 +71,9 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
 
   const onDelete = async () => {
     if (!deleting) return;
-    await run(() => deleteArticle(deleting.id), "Article deleted");
+    const { id } = deleting;
     setDeleting(null);
+    await run(() => deleteArticle(id), "Article deleted", undefined, () => hide(id));
   };
 
   const edit = (a: Article) => {

@@ -18,6 +18,7 @@ import {
 } from "@/components/live-editor/editorShell";
 import { confirmNavigation, useLeaveGuard } from "@/lib/navigation-guard";
 import { startNavigationProgress } from "@/lib/navigation-progress";
+import { useDraftBackup, useSaveWhenOnline } from "@/lib/offline";
 import { applyInlineEdit, ARTICLE_NOT_INLINE, type ArticleField, type BlockAction, type FrameRect } from "@/lib/live-editor";
 import { move } from "@/components/Sortable";
 import type { PreviewToken } from "@/lib/preview-token";
@@ -181,6 +182,8 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
     };
   }, [active, openCard]);
 
+  // Unsaved changes kept on this device.
+  useDraftBackup(`article:${initial.id}`, draft, saved, setDraft);
   useLeaveGuard(dirty);
   const leave = async (href: string) => {
     if (!(await confirmNavigation())) return;
@@ -207,6 +210,8 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
         toast.error("Not saved", (err as Error).message);
       }
     });
+  // Save waits out a lost connection.
+  const saveOnline = useSaveWhenOnline(() => save());
 
   // Deletes the article, after a confirm, and goes back to the list.
   const remove = async () => {
@@ -324,7 +329,7 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
             </button>
           )
         }
-        save={<SaveButton dirty={isNew || dirty} pending={pending} label="Save" onClick={() => save()} />}
+        save={<SaveButton dirty={isNew || dirty} pending={pending} waiting={saveOnline.waiting} label="Save" onClick={saveOnline.save} />}
       />
 
       <PreviewCanvas
