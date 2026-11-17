@@ -24,7 +24,8 @@ import { applyInlineEdit, LOCATION_NOT_INLINE, type FrameRect, type LocationFiel
 import { deleteUploads } from "@/lib/media-actions";
 import { photoUrls } from "@/lib/photos";
 import type { PreviewToken } from "@/lib/preview-token";
-import { buildingName, type Visibility } from "@/lib/site";
+import { buildingName, effectiveVisibility, type Visibility } from "@/lib/site";
+import DraftTip from "@/components/DraftTip";
 import { SLOT_ASPECTS } from "@/lib/imageConstants";
 import type { Banner, BuildingPhotos, Location } from "@/lib/types";
 import { saveLocation } from "./actions";
@@ -481,7 +482,13 @@ export default function BuildingLiveEditor({
         formTitle="Every part of the building's page as a form"
         actions={
           <>
-            <VisibilitySelect slug={initial.slug} value={visibility} status={draft.status} onChange={setVisibility} />
+            {/* A draft: a tip under the visibility says it's hidden, and that this puts it up. */}
+            <DraftTip
+              show={effectiveVisibility(draft.status, visibility) === "draft"}
+              message="It's hidden on the website: no card on the home page, and its page isn't open. When it's ready, press here and pick Live (its card and page) or Card only (its card, with the page to follow)."
+            >
+              <VisibilitySelect slug={initial.slug} value={visibility} status={draft.status} onChange={setVisibility} />
+            </DraftTip>
             <button
               type="button"
               onClick={() => openCard(active === "card" ? null : "card")}

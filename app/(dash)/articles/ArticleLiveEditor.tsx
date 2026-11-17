@@ -29,6 +29,7 @@ import { deleteArticle, saveArticle } from "./actions";
 import ArticleForm from "./ArticleForm";
 import { ArticlePhotos, BlockFields, BLOCKS, blockLabel, slugify } from "./fields";
 import { DatePicker } from "@/components/DatePicker";
+import DraftTip from "@/components/DraftTip";
 
 // The cards: the parts of the page, and the form view with all of it.
 type Card = ArticleField | "form";
@@ -324,15 +325,23 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
               <EyeOff className="size-4" /> <span className="hidden sm:inline">Unpublish</span>
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => save(draft, true)}
-              disabled={pending}
-              title="Save and put it on the website"
-              className={`${button.secondary} py-2!`}
+            // A draft: a tip under Publish says it's hidden, and that this puts it up.
+            <DraftTip
+              show
+              message={`It's hidden on the website, so no one can see it yet. When it's ready, press Publish to put it ${
+                kindOf(draft) === "goings-on" ? "in Goings on" : "in the Volley Reader"
+              } on the home page, with its own page.`}
             >
-              <Globe className="size-4" /> <span className="hidden sm:inline">Publish</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => save(draft, true)}
+                disabled={pending}
+                title="Save and put it on the website"
+                className={`${button.secondary} py-2!`}
+              >
+                <Globe className="size-4" /> <span className="hidden sm:inline">Publish</span>
+              </button>
+            </DraftTip>
           )
         }
         save={<SaveButton dirty={isNew || dirty} pending={pending} waiting={saveOnline.waiting} label="Save" onClick={saveOnline.save} />}
