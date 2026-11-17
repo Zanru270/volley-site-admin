@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { EyeOff, X } from "lucide-react";
 
@@ -11,9 +11,14 @@ import { EyeOff, X } from "lucide-react";
    `show` while it's a draft; `children` is the button it points at.
    It's drawn over the page (portalled to <body>), under the button and
    lined up with its right edge, as those buttons sit at the right of the
-   editor's bar; it follows the button as the window resizes. Its cross,
-   or pressing the button, puts it away for as long as the editor's open;
-   it comes back the next time a draft is opened. */
+   editor's bar; it follows the button as the window resizes. It fades
+   away by itself after SHOW_FOR (held while the pointer's on it, so it can
+   be read to the end); its cross, or pressing the button, puts it away at
+   once. Either way it stays away for as long as the editor's open, and
+   comes back the next time a draft is opened. */
+const SHOW_FOR = 8000;
+const FADE = 300;
+
 export default function DraftTip({
   show,
   title = "This is still a draft",
@@ -29,6 +34,9 @@ export default function DraftTip({
   const anchorRef = useRef<HTMLSpanElement>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  // Fading out, just before it's put away.
+  const [leaving, setLeaving] = useState(false);
+  const [hovered, setHovered] = useState(false);
   // Drawn in the browser only: its place depends on the window.
   const inBrowser = useSyncExternalStore(
     () => () => {},
@@ -36,6 +44,17 @@ export default function DraftTip({
     () => false,
   );
   const open = show && !dismissed;
+
+  // Away by itself after a while, unless the pointer's on it.
+  useEffect(() => {
+    if (!open || hovered) return;
+    const fade = setTimeout(() => setLeaving(true), SHOW_FOR);
+    const gone = setTimeout(() => setDismissed(true), SHOW_FOR + FADE);
+    return () => {
+      clearTimeout(fade);
+      clearTimeout(gone);
+    };
+  }, [open, hovered]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -69,8 +88,15 @@ export default function DraftTip({
         createPortal(
           <div
             role="status"
-            style={{ top: rect.bottom + 10, right }}
-            className="fixed z-50 w-72 max-w-[calc(100vw-16px)] animate-pop-in rounded-xl bg-ink px-4 py-3 text-bone shadow-[0_12px_32px_-8px_rgb(0_0_0/0.45)]"
+            style={{ top: rect.bottom + 10, right, transitionDuration: `${FADE}ms` }}
+            onPointerEnter={() => {
+              setHovered(true);
+              setLeaving(false);
+            }}
+            onPointerLeave={() => setHovered(false)}
+            className={`fixed z-50 w-72 max-w-[calc(100vw-16px)] animate-pop-in rounded-xl bg-ink px-4 py-3 text-bone shadow-[0_12px_32px_-8px_rgb(0_0_0/0.45)] transition-opacity ${
+              leaving ? "opacity-0" : "opacity-100"
+            }`}
           >
             {/* The arrow, pointing up at the button. */}
             <span aria-hidden="true" style={{ right: arrow }} className="absolute -top-1.5 size-3 rotate-45 rounded-[2px] bg-ink" />
