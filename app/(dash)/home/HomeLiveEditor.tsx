@@ -70,7 +70,11 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
   },
   "reader.articles": {
     title: "Volley Reader",
-    hint: "The articles in this carousel are written under Volley Reader.",
+    hint: "The articles in this carousel are written under Articles, on the Volley Reader tab.",
+  },
+  "goingsOn.articles": {
+    title: "Goings on",
+    hint: "The events in this carousel are written under Articles, on the Goings on tab. It's off the page until one is published.",
   },
   "faqs.list": {
     title: "Frequently asked questions",
@@ -440,6 +444,17 @@ export default function HomeLiveEditor({
               onChange={(cardLink) => set("reader", { cardLink })}
             />
             {elsewhere("Edit the articles", "/articles")}
+          </>
+        );
+      case "goingsOn.articles":
+        return (
+          <>
+            <Text
+              label="Link on each card"
+              value={home.goingsOn.cardLink}
+              onChange={(cardLink) => set("goingsOn", { cardLink })}
+            />
+            {elsewhere("Edit the events", "/articles?tab=goings-on")}
           </>
         );
       case "faqs.list":

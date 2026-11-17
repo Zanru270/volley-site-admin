@@ -7,7 +7,8 @@ import { RowControls, StringList } from "@/components/forms";
 import CollapsibleList from "@/components/CollapsibleList";
 import Sortable from "@/components/Sortable";
 import ImageUploader from "@/components/ImageUploader";
-import { siteAsset } from "@/lib/site";
+import ColourPicker from "@/components/ColourPicker";
+import { BANNER_COLOUR, BANNER_TEXT_COLOUR, siteAsset, TOP_COLOUR_SWATCHES } from "@/lib/site";
 import type { Banner, HighlightCard, HomePage, Review } from "@/lib/types";
 
 /* The home page's field editors, shared by its two views: the live editor's
@@ -226,15 +227,46 @@ function HighlightCards({
   );
 }
 
-// The announcement banner: on or off, then its three pieces of wording and the link.
-export function BannerFields({ banner, onChange }: { banner: Banner; onChange: (patch: Partial<Banner>) => void }) {
+/* The banner as it'll look, in its two colours (`fallback`s for whichever
+   it doesn't set): its wording on one line, the link underlined. */
+export function BannerSample({ banner, fallback = {} }: { banner: Banner; fallback?: Partial<Pick<Banner, "colour" | "textColour">> }) {
+  return (
+    <div
+      className="truncate rounded-lg border border-ink/10 px-3 py-3 text-center text-xs font-semibold"
+      style={{
+        backgroundColor: banner.colour || fallback.colour || BANNER_COLOUR,
+        color: banner.textColour || fallback.textColour || BANNER_TEXT_COLOUR,
+      }}
+    >
+      {banner.text || "The banner's wording"}
+      {banner.linkText && <span className="font-light underline underline-offset-3">{banner.linkText}</span>}
+      {banner.after && <span className="font-light">{banner.after}</span>}
+    </div>
+  );
+}
+
+/* The announcement banner: on or off, then its three pieces of wording and
+   the link, then its colour. A building's own banner (TopFields.tsx in
+   buildings) has its colour picked apart: `colour` false leaves it out, and
+   `showHint` says what switching it off hides. */
+export function BannerFields({
+  banner,
+  onChange,
+  colour = true,
+  showHint = "Off hides it on every page until it's turned back on.",
+}: {
+  banner: Banner;
+  onChange: (patch: Partial<Banner>) => void;
+  colour?: boolean;
+  showHint?: string;
+}) {
   return (
     <div className="space-y-5">
       <Toggle
         checked={banner.enabled}
         onChange={(enabled) => onChange({ enabled })}
         label="Show the banner"
-        description="Off hides it on every page until it's turned back on."
+        description={showHint}
       />
       <div className="space-y-5 border-t border-ink/10 pt-5">
         <Text
@@ -259,6 +291,29 @@ export function BannerFields({ banner, onChange }: { banner: Banner; onChange: (
         </div>
         <Text label="Text after the link" value={banner.after} onChange={(after) => onChange({ after })} />
       </div>
+      {colour && (
+        <div className="space-y-5 border-t border-ink/10 pt-5">
+          <BannerSample banner={banner} />
+          <ColourPicker
+            label="Colour"
+            hint="Its background on every page. A building can pick its own in its editor."
+            value={banner.colour ?? ""}
+            fallback={BANNER_COLOUR}
+            onChange={(colour) => onChange({ colour })}
+            swatches={TOP_COLOUR_SWATCHES}
+          />
+          <div className="border-t border-ink/10 pt-5">
+            <ColourPicker
+              label="Text colour"
+              hint="Its wording and link on every page. A building can pick its own in its editor."
+              value={banner.textColour ?? ""}
+              fallback={BANNER_TEXT_COLOUR}
+              onChange={(textColour) => onChange({ textColour })}
+              swatches={TOP_COLOUR_SWATCHES}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

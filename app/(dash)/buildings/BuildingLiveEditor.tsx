@@ -26,7 +26,7 @@ import { photoUrls } from "@/lib/photos";
 import type { PreviewToken } from "@/lib/preview-token";
 import { buildingName, type Visibility } from "@/lib/site";
 import { SLOT_ASPECTS } from "@/lib/imageConstants";
-import type { BuildingPhotos, Location } from "@/lib/types";
+import type { Banner, BuildingPhotos, Location } from "@/lib/types";
 import { saveLocation } from "./actions";
 import LocationForm from "./LocationForm";
 import CardFields, { cardDetailsOf, withCardDetails } from "./CardFields";
@@ -35,6 +35,7 @@ import PhotoGallery from "@/components/PhotoGallery";
 import RoomTypesEditor from "./RoomTypesEditor";
 import VisibilitySelect from "./VisibilitySelect";
 import PlaceFields from "./PlaceFields";
+import { BuildingBannerFields, TopColourFields } from "./TopFields";
 import { emptyIncluded, IncludedIntro, IncludedListEditor } from "./IncludedEditor";
 import { INCLUDED_LISTS } from "@/lib/included";
 
@@ -92,6 +93,16 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
     panel: true,
   },
   pricelist: { title: "Price list", hint: "The PDF the download button gives. Empty hides the button." },
+  banner: {
+    title: "Banner",
+    hint: "The announcement along the top of this building's page. The home page's banner is edited in the home page's editor.",
+    panel: true,
+  },
+  top: {
+    title: "Colours at the top",
+    hint: "The section with the slideshow, from under the banner down. The rest of the page keeps its own colours.",
+    panel: true,
+  },
   card: {
     title: "Card",
     hint: "This building's name, and its card in the Locations carousel, on the home page and under the other buildings. The same as clicking its card in the home page's editor.",
@@ -114,10 +125,13 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
    reaches the database until Save. */
 export default function BuildingLiveEditor({
   initial,
+  homeBanner,
   icons,
   preview,
 }: {
   initial: Location;
+  // The home page's banner, as saved: what "same as the home page" shows.
+  homeBanner: Banner;
   // The icons a "What's included" item can have (the site's own).
   icons: string[];
   preview: PreviewToken;
@@ -402,6 +416,10 @@ export default function BuildingLiveEditor({
           </>
         );
       }
+      case "banner":
+        return <BuildingBannerFields location={draft} home={homeBanner} onChange={(banner) => set({ banner })} />;
+      case "top":
+        return <TopColourFields location={draft} onChange={set} />;
       case "pricelist":
         return <PdfField value={draft.pricelist ?? ""} onChange={(pricelist) => set({ pricelist })} folder="pricelists" />;
       case "card":
@@ -422,6 +440,7 @@ export default function BuildingLiveEditor({
           <LocationForm
             location={draft}
             onChange={setDraft}
+            homeBanner={homeBanner}
             icons={icons}
             onNewUpload={onNewUpload}
             onFocusPhoto={focusPhoto}

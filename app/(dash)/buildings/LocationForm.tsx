@@ -8,9 +8,10 @@ import FormSections, { type FormSection } from "@/components/FormSections";
 import Sortable from "@/components/Sortable";
 import { PdfField } from "@/components/Upload";
 import { LOCATION_CARDS, PAGE_SECTIONS, type PageSection } from "@/lib/site";
-import type { Location } from "@/lib/types";
+import type { Banner, Location } from "@/lib/types";
 import { PhotoSlot, type GalleryField, type PhotoSlotKey } from "./PhotosEditor";
 import PlaceFields from "./PlaceFields";
+import { BuildingBannerFields, TopColourFields } from "./TopFields";
 import RoomTypesEditor from "./RoomTypesEditor";
 import IncludedEditor from "./IncludedEditor";
 
@@ -27,12 +28,15 @@ const paragraphs = (d: Location["description"]): string[] => (Array.isArray(d) ?
 export default function LocationForm({
   location: loc,
   onChange,
+  homeBanner,
   icons,
   onNewUpload,
   onFocusPhoto,
 }: {
   location: Location;
   onChange: (update: (old: Location) => Location) => void;
+  // The home page's banner, as saved.
+  homeBanner: Banner;
   icons: string[];
   onNewUpload: (url: string) => void;
   onFocusPhoto?: (field: GalleryField, index: number | null) => void;
@@ -87,12 +91,25 @@ export default function LocationForm({
     <FormSections
       sections={[
         {
+          id: "banner",
+          title: "Banner",
+          description: "The announcement along the top of this building's page: its colour, and the home page's wording or its own.",
+          content: (
+            <BuildingBannerFields
+              location={loc}
+              home={homeBanner}
+              onChange={(banner) => onChange((l) => ({ ...l, banner }))}
+            />
+          ),
+        },
+        {
           id: "top",
           title: "Top of the page",
           description:
-            "The slideshow and the bedrooms sticker on it (its number and word). The name is edited by clicking the title on the page, or with Card.",
+            "The slideshow, the bedrooms sticker on it (its number and word), and the colours behind it and of its title. The name is edited by clicking the title on the page, or with Card.",
           content: (
             <>
+              <TopColourFields location={loc} onChange={(patch) => onChange((l) => ({ ...l, ...patch }))} />
               <div className="space-y-2">
                 <span className={labelClass}>Slideshow</span>
                 <p className="text-xs text-ink/50">

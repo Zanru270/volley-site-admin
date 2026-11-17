@@ -47,13 +47,22 @@ export const HOME_DAD_PHOTO = {
   alt: "A dad in a cap and field jacket, smiling by the water",
 };
 
-// A saved home page with its photos filled in (see HOME_PHOTOS and HOME_DAD_PHOTO).
+// Goings on's wording until it's saved (../volley-site/content/home.json, `goingsOn`).
+export const HOME_GOINGS_ON = { title: "Goings on", link: "preview all here", cardLink: "Read now" };
+
+/* A saved home page with its photos filled in (see HOME_PHOTOS and
+   HOME_DAD_PHOTO), and Goings on's wording, for a page saved before it. */
 export const withHomePhotos = <
-  T extends { photos?: Partial<Record<HomeBand, HomePhoto>>; dad: { image?: string; alt?: string } },
+  T extends {
+    photos?: Partial<Record<HomeBand, HomePhoto>>;
+    dad: { image?: string; alt?: string };
+    goingsOn?: { title: string; link: string; cardLink: string };
+  },
 >(
   home: T,
 ) => ({
   ...home,
+  goingsOn: { ...HOME_GOINGS_ON, ...home.goingsOn },
   dad: {
     ...home.dad,
     image: home.dad.image || HOME_DAD_PHOTO.image,
@@ -122,6 +131,22 @@ export const NAME_COLOUR_SWATCHES = [
   { value: "#E8E5D8", label: "Bone" },
   { value: "#FFFFFF", label: "White" },
 ];
+
+// The swatches for the top of a building's page (its banner, background
+// and title): the card's, with the website's red and ink.
+export const TOP_COLOUR_SWATCHES = [
+  ...NAME_COLOUR_SWATCHES,
+  { value: "#7E3225", label: "Red" },
+  { value: "#1A1A18", label: "Ink" },
+];
+// The website's own: the banner's lemon, the top section's pink, its title's red.
+export const BANNER_COLOUR = "#C5FF98";
+// The banner's wording: the website's ink.
+export const BANNER_TEXT_COLOUR = "#1A1A18";
+export const HERO_COLOUR = "#FF9F9A";
+export const HERO_TITLE_COLOUR = "#7E3225";
+// The menu bar on a building's page: the website's ink.
+export const NAV_COLOUR = "#1A1A18";
 
 // A colour the picker can save: #rgb or #rrggbb.
 export const isHexColour = (value: string) => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);

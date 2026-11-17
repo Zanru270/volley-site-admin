@@ -10,6 +10,9 @@ import { isHexColour, NAME_COLOUR_SWATCHES } from "@/lib/site";
    value typed in, with a sample of what it's for drawn in it. `value` ""
    is "the website's own", `fallback`, which Reset goes back to.
 
+   `swatches` are the round ones offered (the card's palette unless
+   given); `resetLabel` says what Reset goes back to.
+
    Controlled: `value` in, `onChange` out. A half-typed hex is kept in the
    box and only sent once it's a colour. */
 export default function ColourPicker({
@@ -19,6 +22,8 @@ export default function ColourPicker({
   fallback,
   onChange,
   sample,
+  swatches = NAME_COLOUR_SWATCHES,
+  resetLabel = "Reset to the website\u2019s",
 }: {
   label: string;
   hint?: string;
@@ -27,6 +32,8 @@ export default function ColourPicker({
   onChange: (value: string) => void;
   // Drawn over a dark photo-like block, in the colour.
   sample?: (colour: string) => React.ReactNode;
+  swatches?: { value: string; label: string }[];
+  resetLabel?: string;
 }) {
   const shown = value || fallback;
   // What's in the hex box while it's being typed.
@@ -67,13 +74,13 @@ export default function ColourPicker({
       )}
 
       <div className="flex flex-wrap items-center gap-2.5">
-        {NAME_COLOUR_SWATCHES.map((s) => swatch(s.value, s.label))}
+        {swatches.map((s) => swatch(s.value, s.label))}
 
         {/* Any colour at all: the system's own picker, behind a pipette. */}
         <label
           title="Pick any colour"
           className={`relative flex size-8 cursor-pointer items-center justify-center rounded-full border border-dashed border-ink/30 bg-white text-ink/60 transition-colors hover:border-ink hover:text-ink ${
-            NAME_COLOUR_SWATCHES.some((s) => same(s.value, shown)) ? "" : "ring-2 ring-ink ring-offset-2"
+            swatches.some((s) => same(s.value, shown)) ? "" : "ring-2 ring-ink ring-offset-2"
           }`}
         >
           <Pipette className="size-3.5" />
@@ -114,7 +121,7 @@ export default function ColourPicker({
             }}
             className="inline-flex cursor-pointer items-center gap-1.5 px-1 py-2 text-xs text-ink/60 transition-colors hover:text-ink"
           >
-            <RotateCcw className="size-3.5" /> Reset to the website&rsquo;s
+            <RotateCcw className="size-3.5" /> {resetLabel}
           </button>
         )}
       </div>

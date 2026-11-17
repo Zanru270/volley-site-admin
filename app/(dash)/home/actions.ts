@@ -75,6 +75,11 @@ export async function saveHome(input: HomePage): Promise<Result> {
       link: text(input.reader?.link),
       cardLink: text(input.reader?.cardLink),
     },
+    goingsOn: {
+      title: text(input.goingsOn?.title),
+      link: text(input.goingsOn?.link),
+      cardLink: text(input.goingsOn?.cardLink),
+    },
     faqs: {
       eyebrow: text(input.faqs?.eyebrow),
       title: text(input.faqs?.title),

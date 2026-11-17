@@ -1,6 +1,7 @@
 import {
   Briefcase,
   Building2,
+  CalendarCheck,
   CalendarClock,
   CalendarDays,
   ClipboardList,
@@ -38,16 +39,28 @@ export const NAV_GROUPS: { title: string; pages: NavPage[] }[] = [
         keywords: "banner announcement hero video welcome highlights reviews faqs questions text wording",
       },
       { name: "Buildings", href: "/buildings", icon: Building2, keywords: "locations residences rooms fees" },
-      { name: "Volley Reader", href: "/articles", icon: FileText, keywords: "articles blog news" },
+      { name: "Articles", href: "/articles", icon: FileText, keywords: "volley reader goings on events blog news" },
       { name: "Footer", href: "/footer", icon: PanelBottom, keywords: "social links instagram facebook tiktok linkedin" },
       { name: "Newsletter", href: "/newsletter", icon: Mail, keywords: "sign-ups subscribers emails mailing list" },
     ],
   },
+  // Tours: who's coming to see a building, and the times they can book.
   {
-    title: "Bookings",
+    title: "Tours",
     pages: [
-      { name: "Viewing schedule", href: "/schedule", icon: CalendarClock, keywords: "tours times" },
-      { name: "Waitlist form", href: "/waitlist", icon: ClipboardList, keywords: "apply" },
+      {
+        name: "Tour bookings",
+        href: "/bookings",
+        icon: CalendarCheck,
+        keywords: "book a tour viewings visits visitors bookings appointments",
+      },
+      { name: "Viewing schedule", href: "/schedule", icon: CalendarClock, keywords: "tours times hosts capacity" },
+    ],
+  },
+  // The waitlist: the people who've applied, their interviews, and the form they use.
+  {
+    title: "Waitlist",
+    pages: [
       {
         name: "Applications",
         href: "/waitlist/applications",
@@ -60,6 +73,7 @@ export const NAV_GROUPS: { title: string; pages: NavPage[] }[] = [
         icon: CalendarDays,
         keywords: "interview calendar schedule elaine",
       },
+      { name: "Waitlist form", href: "/waitlist", icon: ClipboardList, keywords: "apply form wording" },
     ],
   },
   {

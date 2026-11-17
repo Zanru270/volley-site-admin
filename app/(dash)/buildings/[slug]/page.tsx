@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { createPreviewToken } from "@/lib/preview-token";
-import type { Location } from "@/lib/types";
+import { getSetting } from "@/lib/settings";
+import type { Banner, Location } from "@/lib/types";
 import { includedLists } from "@/lib/included";
 import BuildingLiveEditor from "../BuildingLiveEditor";
 
@@ -20,6 +21,9 @@ async function includedIcons(): Promise<string[]> {
   }
 }
 
+// Before the home page's banner is in Supabase: off, until it's written.
+const NO_BANNER: Banner = { enabled: false, text: "", linkText: "", linkHref: "", after: "" };
+
 export const metadata: Metadata = { title: "Building" };
 
 /* One building in its live, on-page editor (BuildingLiveEditor.tsx), as the
@@ -27,11 +31,12 @@ export const metadata: Metadata = { title: "Building" };
 export default async function BuildingPage({ params }: PageProps<"/buildings/[slug]">) {
   const { slug } = await params;
   const { supabase, user } = await requireAdmin();
-  const [{ data, error }, icons] = await Promise.all([
+  const [{ data, error }, icons, homeBanner] = await Promise.all([
     supabase.from("locations").select("*").eq("slug", slug).maybeSingle(),
     includedIcons(),
+    getSetting<Banner>(supabase, "banner"),
   ]);
   if (error) throw error;
   if (!data) notFound();
-  return <BuildingLiveEditor key={slug} initial={{ ...(data as Location), ...("included" in data ? { included: includedLists(data.included) } : {}) }} icons={icons} preview={createPreviewToken(user.id)} />;
+  return <BuildingLiveEditor key={slug} initial={{ ...(data as Location), ...("included" in data ? { included: includedLists(data.included) } : {}) }} homeBanner={homeBanner ?? NO_BANNER} icons={icons} preview={createPreviewToken(user.id)} />;
 }

@@ -24,6 +24,7 @@ export const HOME_FIELDS = [
   "locations.cards",
   "highlights.cards",
   "reader.articles",
+  "goingsOn.articles",
   "faqs.list",
   "reviews.items",
   "photos.neighbourhoods",
@@ -50,6 +51,9 @@ export const LOCATION_FIELDS = [
   "included",
   "area",
   "pricelist",
+  // The announcement banner along the top, and the top section's colours.
+  "banner",
+  "top",
 ] as const;
 export type LocationField = (typeof LOCATION_FIELDS)[number];
 

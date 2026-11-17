@@ -1,6 +1,7 @@
 "use client";
 
-import { Field, inputClass, textareaClass } from "@/components/ui";
+import { Field, inputClass, labelClass, tab, tabs, textareaClass } from "@/components/ui";
+import { ARTICLE_KINDS, articlePath, kindOf } from "@/lib/articles";
 import FormSections from "@/components/FormSections";
 import type { Article } from "@/lib/types";
 import { ArticleBody, ArticlePhotos } from "./fields";
@@ -29,13 +30,35 @@ export default function ArticleForm({
         {
           id: "details",
           title: "Details",
-          description: "The title, its address on the website, and the line under it.",
+          description: "Where it shows, the title, its address on the website, and the line under it.",
           content: (
             <>
+              {/* Not a Field: that's a <label>, which would pass a click on
+                  its hint to the first button. */}
+              <div className="space-y-1.5">
+                <span className={labelClass}>Shows in</span>
+                <div role="radiogroup" aria-label="Shows in" className={tabs}>
+                  {ARTICLE_KINDS.map((k) => (
+                    <button
+                      key={k.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={kindOf(a) === k.value}
+                      onClick={() => onChange({ kind: k.value })}
+                      className={tab(kindOf(a) === k.value)}
+                    >
+                      {k.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-ink/50">
+                  Its carousel on the home page, and its address. Its page looks the same either way.
+                </p>
+              </div>
               <Field label="Title">
                 <input required value={a.title} onChange={(e) => onTitle(e.target.value)} className={inputClass} />
               </Field>
-              <Field label="URL" hint={`volley…/volley-reader/${a.slug || "…"}. Changing it breaks links people already have.`}>
+              <Field label="URL" hint={`volley…${articlePath({ ...a, slug: a.slug || "…" })}. Changing it breaks links people already have.`}>
                 <input required value={a.slug} onChange={(e) => onSlug(e.target.value)} className={inputClass} />
               </Field>
               <div className="grid gap-6 sm:grid-cols-3">

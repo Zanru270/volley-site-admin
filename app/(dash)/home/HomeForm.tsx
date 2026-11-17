@@ -263,7 +263,7 @@ export default function HomeForm({
         {
           id: "reader",
           title: "Volley Reader",
-          description: "The article carousel's own wording, and the photo under it. The articles are under Volley Reader.",
+          description: "The article carousel's own wording, and the photo under it. The articles are under Articles.",
           content: (
             <>
               <div className="grid gap-6 sm:grid-cols-3">
@@ -275,6 +275,24 @@ export default function HomeForm({
                 Edit the articles <ArrowRight className="size-4" />
               </button>
               {photo("reader")}
+            </>
+          ),
+        },
+        {
+          id: "goingsOn",
+          title: "Goings on",
+          description:
+            "The events' carousel, under the Volley Reader's photo: its own wording. The events are under Articles, on the Goings on tab; it's off the page until one is published.",
+          content: (
+            <>
+              <div className="grid gap-6 sm:grid-cols-3">
+                <Text label="Heading" value={f.goingsOn.title} onChange={(v) => set("goingsOn", { title: v })} />
+                <Text label="Link beside it" value={f.goingsOn.link} onChange={(v) => set("goingsOn", { link: v })} />
+                <Text label="Link on each card" value={f.goingsOn.cardLink} onChange={(v) => set("goingsOn", { cardLink: v })} />
+              </div>
+              <button type="button" onClick={() => onLeave("/articles?tab=goings-on")} className={`${button.secondary} w-full`}>
+                Edit the events <ArrowRight className="size-4" />
+              </button>
             </>
           ),
         },

@@ -55,6 +55,12 @@ export const DEFAULT_FOOTER: FooterSettings = {
       on: true,
     },
     {
+      key: "goings-on",
+      label: "Goings on",
+      href: "/#goings-on",
+      on: true,
+    },
+    {
       key: "careers",
       label: "Careers",
       href: "/careers",

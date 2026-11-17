@@ -30,6 +30,8 @@ export async function saveArticle(
     aspect: input.aspect.trim(),
     body: input.body,
     published: Boolean(input.published),
+    // Left out while the database has no column for it.
+    ...(input.kind !== undefined ? { kind: input.kind === "goings-on" ? "goings-on" : "reader" } : {}),
   };
   if (!article.title) return { ok: false, message: "Give the article a title." };
   if (!SLUG.test(article.slug))
@@ -68,7 +70,7 @@ export async function saveArticle(
       return {
         ok: false,
         message:
-          "Couldn't save: the database needs a one-off update first. Ask whoever set up the admin to run supabase/reader-dates.sql.",
+          "Couldn't save: the database needs a one-off update first. Ask whoever set up the admin to run supabase/article-kind.sql (and, if it's never been run, supabase/reader-dates.sql).",
       };
     return failed(err);
   }

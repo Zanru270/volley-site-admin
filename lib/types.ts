@@ -8,7 +8,17 @@ export type Banner = {
   linkText: string;
   linkHref: string;
   after: string;
+  // Its background, a hex colour; empty (or missing, as saved before it
+  // could be picked) is the website's lemon.
+  colour?: string;
+  // Its wording's and link's colour; empty (or missing) is ink.
+  textColour?: string;
 };
+
+/* A building's own banner (`banner` on its row): `own` false shows the
+   home page's wording, link and on/off; true, these. `colour` empty is
+   the home page banner's colour. ../volley-site/lib/banner.js reads it. */
+export type BuildingBanner = Banner & { own: boolean };
 
 /* The "Apply now" waitlist form's wording (settings 'waitlist_form');
    ../volley-site/content/waitlist.json has the defaults. */
@@ -100,10 +110,16 @@ export type Article = {
   hero: string;
   aspect: string;
   body: ArticleBlock[];
+  // The Volley Reader or Goings on (the events): its carousel on the home
+  // page and its address. Missing until the database has the column
+  // (supabase/article-kind.sql), and then the Reader.
+  kind?: ArticleKind;
   published: boolean;
   sort: number;
   updated_at?: string;
 };
+
+export type ArticleKind = "reader" | "goings-on";
 
 export type RoomType = {
   label: string;
@@ -164,6 +180,17 @@ export type Location = {
   // the website's (LOCATION_NAME_COLOURS); missing until the database has
   // the column (supabase/building-card-colour.sql).
   card_colour?: string | null;
+  // The top of its page: its announcement banner (null is the home page's),
+  // the slideshow section's background and its title's colour (hex
+  // colours; null keeps pink and red). Missing until the database has the
+  // columns (supabase/building-top-colours.sql).
+  banner?: BuildingBanner | null;
+  hero_colour?: string | null;
+  hero_title_colour?: string | null;
+  // The menu bar over it while closed: its logo, line and menu button (a
+  // hex colour; null keeps ink). Missing until the database has the column
+  // (supabase/building-nav-colour.sql).
+  nav_colour?: string | null;
   // Whether it's on the website (VISIBILITIES in lib/site.ts). Null is
   // Automatic, which follows the status; missing until the database has the column
   // (supabase/building-visibility.sql).
@@ -222,6 +249,8 @@ export type HomePage = {
     included: HighlightCard[];
   };
   reader: { title: string; link: string; cardLink: string };
+  // Goings on: the events' carousel, under the Volley Reader's photo.
+  goingsOn: { title: string; link: string; cardLink: string };
   faqs: { eyebrow: string; title: string; intro: string; handle: string };
   reviews: { title: string; items: Review[] };
   beat: { script: string; caps: string };

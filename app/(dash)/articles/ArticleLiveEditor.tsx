@@ -24,6 +24,7 @@ import { applyInlineEdit, ARTICLE_NOT_INLINE, type ArticleField, type BlockActio
 import { move } from "@/components/Sortable";
 import type { PreviewToken } from "@/lib/preview-token";
 import type { Article } from "@/lib/types";
+import { articlePath, kindLabel, kindOf } from "@/lib/articles";
 import { deleteArticle, saveArticle } from "./actions";
 import ArticleForm from "./ArticleForm";
 import { ArticlePhotos, BlockFields, BLOCKS, blockLabel, slugify } from "./fields";
@@ -227,13 +228,15 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
       const result = await deleteArticle(saved.id);
       toast.result(result, "Article deleted");
       if (!result.ok) return;
-      startNavigationProgress("/articles");
-      router.push("/articles");
+      startNavigationProgress(listHref);
+      router.push(listHref);
     });
   };
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
+  // Back to the list, on this article's tab (as saved).
+  const listHref = kindOf(saved) === "reader" ? "/articles" : `/articles?tab=${kindOf(saved)}`;
   const cardBody = (card: Card): ReactNode => {
     switch (card) {
       case "photos":
@@ -285,7 +288,7 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
   return (
     <div className="fixed inset-0 z-45 flex flex-col bg-bone">
       <EditorHeader
-        back={{ label: "Volley Reader", onClick: () => leave("/articles") }}
+        back={{ label: kindLabel(kindOf(saved)), onClick: () => leave(listHref) }}
         title={draft.title.trim() || "New article"}
         status={
           <span
@@ -303,7 +306,7 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
           openCard(null);
           setDevice(next);
         }}
-        viewUrl={saved.published && !isNew && siteUrl ? `${siteUrl}/volley-reader/${saved.slug}` : null}
+        viewUrl={saved.published && !isNew && siteUrl ? `${siteUrl}${articlePath(saved)}` : null}
         formOpen={active === "form"}
         onForm={() => openCard(active === "form" ? null : "form")}
         formTitle="Every part of the article as a form, including its URL and excerpt"

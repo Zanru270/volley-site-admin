@@ -13,14 +13,14 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { Badge, button, CountPill, iconButton, iconButtonDanger, PageHeader, press, SearchBox } from "@/components/ui";
+import { Badge, button, CountPill, iconButton, iconButtonDanger, PageHeader, press, SearchBox, tab as tabClass, tabs } from "@/components/ui";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import ListViewSwitch from "@/components/ListViewSwitch";
 import { useAction } from "@/components/forms";
 import { useListView } from "@/hooks/useListView";
-import { articleDate } from "@/lib/articles";
+import { ARTICLE_KINDS, articleDate, articlePath, kindOf } from "@/lib/articles";
 import { siteAsset } from "@/lib/site";
-import type { Article } from "@/lib/types";
+import type { Article, ArticleKind } from "@/lib/types";
 import { deleteArticle } from "./actions";
 
 type Status = "published" | "draft";
@@ -42,12 +42,27 @@ const chipClass = (active: boolean) =>
 const overPhoto =
   `inline-flex cursor-pointer items-center justify-center rounded-full bg-white/90 p-2 text-ink/60 shadow-soft ${press} active:scale-[0.86] hover:bg-white hover:text-ink`;
 
-/* The Volley Reader, laid out like the Bow + Arc CMS's News & Views page: a
-   toolbar (search, a count, grid or list), published / draft chips, then a
-   card or a row per article. Opening one goes to its live editor
-   (/articles/[id]), as there. As there too, they're newest first by date,
-   the order the website shows them in; `initial` comes sorted. */
-export default function ArticleList({ initial }: { initial: Article[] }) {
+// What each tab says about itself.
+const TAB_INFO: Record<ArticleKind, { description: string; noun: string }> = {
+  reader: {
+    description: "The articles in the home page's Volley Reader carousel, newest first, each with its own page. Drafts stay hidden until published.",
+    noun: "article",
+  },
+  "goings-on": {
+    description: "The events in the home page's Goings on carousel, under the Volley Reader's photo, newest first, each with its own page laid out as an article is. Drafts stay hidden until published.",
+    noun: "event",
+  },
+};
+
+/* The articles, laid out like the Bow + Arc CMS's News & Views page: a tab
+   each for the Volley Reader and Goings on (the events), a toolbar (search,
+   a count, grid or list), published / draft chips, then a card or a row
+   per article. Opening one goes to its live editor (/articles/[id]), as
+   there. As there too, they're newest first by date, the order the
+   website shows them in; `initial` comes sorted. `tab` is the one it opens
+   on (?tab= in the address, kept as the tabs change so the editor's way
+   back returns to it). */
+export default function ArticleList({ initial, tab }: { initial: Article[]; tab: ArticleKind }) {
   const router = useRouter();
   /* Fresh from the server after every change (router.refresh); a deleted
      article goes from it at once, and comes back if it couldn't be. */
@@ -55,14 +70,22 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<Status | null>(null);
   const [view, setView] = useListView("admin-articles-view");
+  const [kind, setKind] = useState<ArticleKind>(tab);
+  const pickKind = (next: ArticleKind) => {
+    setKind(next);
+    router.replace(next === "reader" ? "/articles" : `/articles?tab=${next}`, { scroll: false });
+  };
+  const { noun } = TAB_INFO[kind];
+  const newHref = kind === "reader" ? "/articles/new" : `/articles/new?kind=${kind}`;
+  const ofKind = list.filter((a) => kindOf(a) === kind);
   const [deleting, setDeleting] = useState<Article | null>(null);
   const { pending, run } = useAction();
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
   const q = search.trim().toLowerCase();
   const searched = q
-    ? list.filter((a) => [a.title, a.location, a.category, a.slug].some((t) => t?.toLowerCase().includes(q)))
-    : list;
+    ? ofKind.filter((a) => [a.title, a.location, a.category, a.slug].some((t) => t?.toLowerCase().includes(q)))
+    : ofKind;
   const shown = status ? searched.filter((a) => statusOf(a) === status) : searched;
   const clear = () => {
     setSearch("");
@@ -85,7 +108,7 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
     a.published &&
     siteUrl && (
       <a
-        href={`${siteUrl}/volley-reader/${a.slug}`}
+        href={`${siteUrl}${articlePath(a)}`}
         target="_blank"
         rel="noopener noreferrer"
         className={className}
@@ -100,20 +123,38 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
     <>
       <PageHeader
         icon={FileText}
-        title="Volley Reader"
-        description="The articles in the home page carousel, newest first, each with its own page. Drafts stay hidden until published."
+        title="Articles"
+        description={TAB_INFO[kind].description}
         actions={
-          <Link href="/articles/new" className={`${button.primary} w-full sm:w-auto`}>
-            <Plus className="size-4" /> New article
+          <Link href={newHref} className={`${button.primary} w-full sm:w-auto`}>
+            <Plus className="size-4" /> New {noun}
           </Link>
         }
       />
 
+      <div role="tablist" aria-label="Volley Reader or Goings on" className={`${tabs} mb-4`}>
+        {ARTICLE_KINDS.map((k) => (
+          <button
+            key={k.value}
+            type="button"
+            role="tab"
+            aria-selected={kind === k.value}
+            onClick={() => pickKind(k.value)}
+            className={tabClass(kind === k.value)}
+          >
+            {k.label}
+            <span className={`ml-1.5 ${kind === k.value ? "text-ink/40" : "text-ink/30"}`}>
+              {list.filter((a) => kindOf(a) === k.value).length}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-2xl border border-ink/10 bg-white p-4 sm:flex-row sm:items-center">
-        <SearchBox value={search} onChange={setSearch} placeholder="Search articles..." />
+        <SearchBox value={search} onChange={setSearch} placeholder={`Search ${noun}s...`} />
         <div className="flex shrink-0 items-center gap-3 self-end sm:self-auto">
           <CountPill>
-            {shown.length} {shown.length === 1 ? "article" : "articles"}
+            {shown.length} {shown.length === 1 ? noun : `${noun}s`}
           </CountPill>
           <ListViewSwitch view={view} onChange={setView} />
         </div>
@@ -232,16 +273,16 @@ export default function ArticleList({ initial }: { initial: Article[] }) {
 
       {shown.length === 0 && (
         <div className="rounded-2xl border border-ink/10 bg-white px-6 py-12 text-center text-sm text-ink/50">
-          {list.length === 0 ? (
+          {ofKind.length === 0 ? (
             <>
-              No articles yet.{" "}
-              <Link href="/articles/new" className="text-ink/70 underline underline-offset-2 hover:text-ink">
+              No {noun}s yet.{" "}
+              <Link href={newHref} className="text-ink/70 underline underline-offset-2 hover:text-ink">
                 Write the first one
               </Link>
             </>
           ) : (
             <>
-              No articles match.{" "}
+              No {noun}s match.{" "}
               <button
                 type="button"
                 onClick={clear}

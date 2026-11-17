@@ -9,7 +9,7 @@ import { after } from "next/server";
 import { deleteUploads } from "@/lib/media-actions";
 import { sweepUnusedUploads } from "@/lib/media-sweep";
 import { photoUrls } from "@/lib/photos";
-import type { BuildingPhotos, Included, Location, Photo } from "@/lib/types";
+import type { BuildingBanner, BuildingPhotos, Included, Location, Photo } from "@/lib/types";
 import { INCLUDED_LISTS } from "@/lib/included";
 
 const orNull = <T,>(v: T | "" | null | undefined) =>
@@ -74,6 +74,25 @@ function cleanSections(input: Location["sections"]): Location["sections"] {
   return off.length ? Object.fromEntries(off) : null;
 }
 
+/* A building's own banner as saved: null when it's the home page's with
+   no colour of its own, so the website shows the home page's. Its wording
+   is kept while it's switched to the home page's, so switching back finds
+   it again. */
+function cleanBanner(input: BuildingBanner | null | undefined): BuildingBanner | null {
+  if (!input) return null;
+  const out: BuildingBanner = {
+    own: input.own === true,
+    enabled: input.enabled === true,
+    text: String(input.text ?? ""),
+    linkText: String(input.linkText ?? ""),
+    linkHref: text(input.linkHref),
+    after: String(input.after ?? ""),
+    colour: text(input.colour),
+    textColour: text(input.textColour),
+  };
+  return out.own || out.colour || out.textColour ? out : null;
+}
+
 const COLOUR_MESSAGE = "The name's colour needs to be a hex colour, e.g. #F6EB6D.";
 const STATUS_MESSAGE = 'The status needs to be "Open", "Coming soon", or "Opening" with a year, e.g. 2028.';
 
@@ -99,6 +118,20 @@ export async function saveLocation(input: Location): Promise<Result> {
   if (!isStatus(status)) return { ok: false, message: STATUS_MESSAGE };
   if (input.card_colour && !isHexColour(input.card_colour.trim()))
     return { ok: false, message: COLOUR_MESSAGE };
+  const banner = cleanBanner(input.banner);
+  if (banner?.colour && !isHexColour(banner.colour))
+    return { ok: false, message: "The banner's colour needs to be a hex colour, e.g. #C5FF98." };
+  if (banner?.textColour && !isHexColour(banner.textColour))
+    return { ok: false, message: "The banner's text colour needs to be a hex colour, e.g. #1A1A18." };
+  if (banner?.own && banner.linkText && !banner.linkHref)
+    return { ok: false, message: "Add a link for the banner's link text, or clear it." };
+  for (const [value, what] of [
+    [input.hero_colour, "top's background colour"],
+    [input.hero_title_colour, "title's colour"],
+    [input.nav_colour, "menu bar's colour"],
+  ] as const)
+    if (value && !isHexColour(value.trim()))
+      return { ok: false, message: `The ${what} needs to be a hex colour, e.g. #FF9F9A.` };
   if (input.footer && !BUILDING_COLOURS.some((c) => c.value === input.footer))
     return { ok: false, message: "That colour isn't one of the choices." };
   if (rooms?.types.some((t) => !t.label))
@@ -128,6 +161,10 @@ export async function saveLocation(input: Location): Promise<Result> {
     ...(input.city !== undefined ? { city: orNull(input.city?.trim()) } : {}),
     ...(input.card_colour !== undefined ? { card_colour: orNull(input.card_colour?.trim()) } : {}),
     ...(input.footer !== undefined ? { footer: orNull(input.footer) } : {}),
+    ...(input.banner !== undefined ? { banner } : {}),
+    ...(input.hero_colour !== undefined ? { hero_colour: orNull(input.hero_colour?.trim()) } : {}),
+    ...(input.hero_title_colour !== undefined ? { hero_title_colour: orNull(input.hero_title_colour?.trim()) } : {}),
+    ...(input.nav_colour !== undefined ? { nav_colour: orNull(input.nav_colour?.trim()) } : {}),
     address: orNull(input.address?.trim()),
     status,
     summary: orNull(input.summary?.trim()),
@@ -154,7 +191,7 @@ export async function saveLocation(input: Location): Promise<Result> {
     return {
       ok: false,
       message:
-        "Couldn't save: the database needs a one-off update first. Ask whoever set up the admin to run supabase/building-card-colour.sql, building-new.sql, building-beds-word.sql, building-beds.sql, building-buttons.sql, building-sections.sql and building-name.sql (and, if it's never been run, building-order.sql, building-photos.sql, whats-included.sql and location-area.sql).",
+        "Couldn't save: the database needs a one-off update first. Ask whoever set up the admin to run supabase/building-nav-colour.sql, building-top-colours.sql, building-card-colour.sql, building-new.sql, building-beds-word.sql, building-beds.sql, building-buttons.sql, building-sections.sql and building-name.sql (and, if it's never been run, building-order.sql, building-photos.sql, whats-included.sql and location-area.sql).",
     };
   if (error) return failed(error);
   if (!data?.length) return { ok: false, message: "Couldn't save: not allowed (0 rows saved)." };
