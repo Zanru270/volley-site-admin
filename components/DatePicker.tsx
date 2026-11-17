@@ -284,6 +284,7 @@ export function TimePicker({
   disabled = false,
   step = 15,
   placeholder = "Pick a time",
+  icon,
   className = "",
 }: {
   value: string;
@@ -293,6 +294,8 @@ export function TimePicker({
   /** Minutes between the times offered. */
   step?: number;
   placeholder?: string;
+  // In place of the clock, e.g. a + for "add a time".
+  icon?: ReactNode;
   className?: string;
 }) {
   const { open, setOpen, close, rect, anchorRef, cardRef } = usePopover();
@@ -338,7 +341,7 @@ export function TimePicker({
         className={boxClass}
       >
         <span className={`tabular-nums ${current ? "" : "text-ink/35"}`}>{current || placeholder}</span>
-        <Clock className="size-4 shrink-0 text-ink/40 transition-colors group-hover:text-ink" />
+        {icon ?? <Clock className="size-4 shrink-0 text-ink/40 transition-colors group-hover:text-ink" />}
       </button>
       <RequiredShadow value={current} required={required} />
       {open && rect && (

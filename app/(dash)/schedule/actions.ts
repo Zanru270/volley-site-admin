@@ -8,6 +8,7 @@ import { failed, saved, type Result } from "@/lib/result";
 import type { Viewings } from "@/lib/types";
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+const todayISO = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Johannesburg" }).format(new Date());
 const DATE = /^\d{4}-\d\d-\d\d$/;
 /* Checks the whole timetable before saving: a bad time here would quietly
    break the booking calendar on the site. */
@@ -19,6 +20,13 @@ function check(v: Viewings, houses: string[]): string | null {
     if (w.from >= w.to) return `${name}: it ends before it starts.`;
     if (!w.houses.length) return `${name}: pick at least one building.`;
     if (w.houses.some((h) => !houses.includes(h))) return `${name}: one of its buildings no longer exists.`;
+  }
+  for (const x of v.extras) {
+    const name = `Extra times${DATE.test(x.date) ? ` on ${x.date}` : ""}`;
+    if (!houses.includes(x.house)) return `${name}: pick a building.`;
+    if (!DATE.test(x.date)) return `${name}: pick a date.`;
+    if (!x.times.length) return `${name}: add at least one time.`;
+    if (x.times.some((t) => !TIME.test(t))) return `${name}: every time needs to be filled in.`;
   }
   const r = v.rules;
   const whole = (n: number, min: number) => Number.isInteger(n) && n >= min;
@@ -45,6 +53,11 @@ export async function saveViewings(input: Viewings): Promise<Result> {
         hosts: w.hosts.trim(),
       }))
       .sort((a, b) => a.from.localeCompare(b.from)),
+    // Tidied: each date's times in order, once each; dates gone by dropped.
+    extras: (input.extras ?? [])
+      .map((x) => ({ house: x.house, date: x.date, times: [...new Set(x.times.filter(Boolean))].sort() }))
+      .filter((x) => !x.date || x.date >= todayISO())
+      .sort((a, b) => a.date.localeCompare(b.date) || a.house.localeCompare(b.house)),
     rules: {
       ...input.rules,
       closed: [...new Set(input.rules.closed.filter(Boolean))].sort(),

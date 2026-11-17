@@ -45,10 +45,19 @@ export type ViewingWindow = {
   houses: string[];
   hosts: string;
 };
+/* Extra times: one building on one date, with start times on top of the
+   week's (each a tour of the rules' length). For an open day, or a busy
+   week. Kept until the date has passed. */
+export type ViewingExtra = {
+  house: string;
+  date: string;
+  times: string[];
+};
 /* The timetable and booking rules. Saved as `windows`; one saved before
    as `schedule` (ViewingGroup) is read into windows (viewingWindows). */
 export type Viewings = {
   windows: ViewingWindow[];
+  extras: ViewingExtra[];
   rules: {
     minutes: number;
     step: number;
@@ -224,7 +233,11 @@ export type HomeBand = "neighbourhoods" | "highlights" | "reader";
 export type HomePhoto = { image: string; sticker: string; stickerAlt: string };
 
 // The timetable as it may be saved: in the older shape, groups of days.
-export type SavedViewings = Omit<Viewings, "windows"> & { windows?: ViewingWindow[]; schedule?: ViewingGroup[] };
+export type SavedViewings = Omit<Viewings, "windows" | "extras"> & {
+  windows?: ViewingWindow[];
+  schedule?: ViewingGroup[];
+  extras?: ViewingExtra[];
+};
 
 // A saved timetable as its list of viewings, whichever shape it was saved in.
 export function viewingWindows(saved: SavedViewings): Viewings {
@@ -233,5 +246,5 @@ export function viewingWindows(saved: SavedViewings): Viewings {
     (saved.schedule ?? []).flatMap((group) =>
       group.slots.map((slot) => ({ weekdays: group.weekdays, from: slot.from, to: slot.to, houses: slot.houses, hosts: slot.hosts })),
     );
-  return { windows, rules: saved.rules };
+  return { windows, extras: saved.extras ?? [], rules: saved.rules };
 }

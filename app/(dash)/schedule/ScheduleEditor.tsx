@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarX2, Clock, Plus, Trash2, Users } from "lucide-react";
+import { CalendarX2, Clock, Plus, Trash2, Users, X } from "lucide-react";
 import { button, Card, Field, inputClass, labelClass } from "@/components/ui";
 import SaveBar from "@/components/SaveBar";
 import EditModal from "@/components/EditModal";
@@ -46,20 +46,29 @@ const longDate = (iso: string) =>
 
 /* The start times Book a Tour offers `house` on `iso`, as the site works
    them out (viewingsOn in its lib/viewings.js), before anyone books and
-   whatever the notice: or why there are none. */
-function bookable(v: Viewings, house: string, iso: string): { times: string[] } | { why: string } {
-  if (v.rules.closed.includes(iso)) return { why: "It's a closed day." };
-  if (iso > addDays(todayISO(), v.rules.bookAheadDays))
-    return { why: `It's more than ${v.rules.bookAheadDays} days ahead, so it can't be booked yet.` };
+   whatever the notice: the week's (`weekly`), and the extra times added
+   for that date (`extras`). `closed`: none at all that day. `later`: past
+   how far ahead people can book, so not offered yet. */
+function dayTimes(v: Viewings, house: string, iso: string) {
   const day = weekdayOf(iso);
-  const times = new Set<string>();
+  const weekly = new Set<string>();
   for (const w of v.windows) {
     if (!w.weekdays.includes(day) || !w.houses.includes(house)) continue;
-    for (let t = toMinutes(w.from); t + v.rules.minutes <= toMinutes(w.to); t += v.rules.step) times.add(toTime(t));
+    for (let t = toMinutes(w.from); t + v.rules.minutes <= toMinutes(w.to); t += v.rules.step) weekly.add(toTime(t));
   }
-  if (!times.size) return { why: `There's no viewing for this building on ${DAY_NAMES[day]}s.` };
-  return { times: [...times].sort() };
+  const extras = (v.extras.find((x) => x.house === house && x.date === iso)?.times ?? []).filter((t) => t && !weekly.has(t));
+  return {
+    day,
+    weekly: [...weekly].sort(),
+    extras: [...extras].sort(),
+    closed: v.rules.closed.includes(iso),
+    later: iso > addDays(todayISO(), v.rules.bookAheadDays),
+  };
 }
+
+const shortDate = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short" });
+
 
 const newWindow = (houses: string[]): ViewingWindow => ({
   weekdays: [],
@@ -122,7 +131,22 @@ export default function ScheduleEditor({
   // The preview: a building and a date.
   const [previewHouse, setPreviewHouse] = useState(houses[0]?.slug ?? "");
   const [previewDate, setPreviewDate] = useState(() => addDays(todayISO(), 1));
-  const preview = previewHouse && previewDate ? bookable(v, previewHouse, previewDate) : null;
+  const preview = previewHouse && previewDate ? dayTimes(v, previewHouse, previewDate) : null;
+
+  /* Extra times: added and removed right in the preview, for the building
+     and date picked there. A date's entry goes once its last time does. */
+  const setExtraTimes = (house: string, date: string, times: string[]) => {
+    const rest = v.extras.filter((x) => !(x.house === house && x.date === date));
+    const extras = times.length ? [...rest, { house, date, times: [...new Set(times)].sort() }] : rest;
+    setV({ ...v, extras: extras.sort((a, b) => a.date.localeCompare(b.date) || a.house.localeCompare(b.house)) });
+  };
+  const addExtra = (time: string) => {
+    if (!preview || !time || preview.weekly.includes(time)) return;
+    setExtraTimes(previewHouse, previewDate, [...preview.extras, time]);
+  };
+  const removeExtra = (time: string) => preview && setExtraTimes(previewHouse, previewDate, preview.extras.filter((t) => t !== time));
+  // Every date with extra times still to come, to jump the preview to.
+  const upcoming = v.extras.filter((x) => x.date >= todayISO() && x.times.length);
 
   const numberInput = (key: keyof Viewings["rules"], min: number, label: string) => (
     <input
@@ -227,7 +251,7 @@ export default function ScheduleEditor({
           <p className="text-sm font-medium text-ink">What visitors can book</p>
           <p className="mt-0.5 text-xs text-ink/50">
             The times Book a Tour offers for a building on a day, from the week above and these rules (before
-            anyone has booked).
+            anyone has booked). Pick a building and a date, then + to add an extra time for that day only.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <CustomSelect
@@ -243,17 +267,81 @@ export default function ScheduleEditor({
           {preview && (
             <div className="mt-4">
               <p className="text-xs text-ink/55">{previewDate && longDate(previewDate)}</p>
-              {"times" in preview ? (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {preview.times.map((t) => (
-                    <span key={t} className="rounded-md border border-ink/15 bg-white px-2 py-1 text-xs font-medium text-ink tabular-nums">
-                      {t}
-                    </span>
-                  ))}
-                </div>
+              {preview.closed ? (
+                <p className="mt-2 text-sm text-ink/60">It&rsquo;s a closed day: no viewings at all. Take it off the closed days below to offer times.</p>
               ) : (
-                <p className="mt-2 text-sm text-ink/60">{preview.why}</p>
+                <>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {preview.weekly.map((t) => (
+                      <span key={t} className="rounded-md border border-ink/15 bg-white px-2 py-1 text-xs font-medium text-ink tabular-nums">
+                        {t}
+                      </span>
+                    ))}
+                    {preview.extras.map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center gap-1 rounded-md border border-lightGreen/40 bg-lemon/50 py-1 pr-1 pl-2 text-xs font-medium text-ink tabular-nums"
+                      >
+                        {t}
+                        <button
+                          type="button"
+                          onClick={() => removeExtra(t)}
+                          aria-label={`Remove the extra time ${t}`}
+                          className="cursor-pointer rounded p-0.5 text-ink/50 transition-colors hover:bg-white/70 hover:text-brick"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <TimePicker
+                      value=""
+                      onChange={addExtra}
+                      placeholder="Add a time"
+                      icon={<Plus className="size-4 shrink-0 text-ink/50 transition-colors group-hover:text-ink" />}
+                      className="w-36"
+                    />
+                  </div>
+                  {!preview.weekly.length && !preview.extras.length && (
+                    <p className="mt-2 text-sm text-ink/60">
+                      No viewing for this building on {DAY_NAMES[preview.day]}s. Add a time to offer one on this date.
+                    </p>
+                  )}
+                  {preview.extras.length > 0 && (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs text-ink/55">
+                      <span className="size-2.5 rounded-sm border border-lightGreen/40 bg-lemon/50" /> Added for this date only. Save to put them live.
+                    </p>
+                  )}
+                  {preview.later && (
+                    <p className="mt-2 text-xs text-ink/55">
+                      More than {v.rules.bookAheadDays} days ahead: these show on the website once bookings open for this date.
+                    </p>
+                  )}
+                </>
               )}
+            </div>
+          )}
+          {upcoming.length > 0 && (
+            <div className="mt-5 border-t border-ink/10 pt-4">
+              <p className="text-xs font-medium text-ink/60">Extra times coming up</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {upcoming.map((x) => (
+                  <button
+                    key={`${x.house}-${x.date}`}
+                    type="button"
+                    onClick={() => {
+                      setPreviewHouse(x.house);
+                      setPreviewDate(x.date);
+                    }}
+                    className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                      x.house === previewHouse && x.date === previewDate
+                        ? "border-ink bg-ink text-bone"
+                        : "border-ink/15 bg-white text-ink/70 hover:border-ink/40 hover:text-ink"
+                    }`}
+                  >
+                    {nameOf(x.house)}, {shortDate(x.date)} · {x.times.length} {x.times.length === 1 ? "time" : "times"}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
