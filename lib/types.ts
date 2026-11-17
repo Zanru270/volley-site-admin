@@ -51,8 +51,10 @@ export type ViewingWindow = {
 export type ViewingExtra = {
   house: string;
   date: string;
-  times: string[];
+  times: ViewingExtraTime[];
 };
+// One extra start time and who hosts it (one of EXTRA_HOSTS in lib/viewings.ts).
+export type ViewingExtraTime = { from: string; hosts: string };
 /* The timetable and booking rules. Saved as `windows`; one saved before
    as `schedule` (ViewingGroup) is read into windows (viewingWindows). */
 export type Viewings = {
@@ -236,7 +238,8 @@ export type HomePhoto = { image: string; sticker: string; stickerAlt: string };
 export type SavedViewings = Omit<Viewings, "windows" | "extras"> & {
   windows?: ViewingWindow[];
   schedule?: ViewingGroup[];
-  extras?: ViewingExtra[];
+  // Times saved before they had hosts were plain "HH:MM" strings.
+  extras?: (Omit<ViewingExtra, "times"> & { times: (string | ViewingExtraTime)[] })[];
 };
 
 // A saved timetable as its list of viewings, whichever shape it was saved in.
@@ -246,5 +249,9 @@ export function viewingWindows(saved: SavedViewings): Viewings {
     (saved.schedule ?? []).flatMap((group) =>
       group.slots.map((slot) => ({ weekdays: group.weekdays, from: slot.from, to: slot.to, houses: slot.houses, hosts: slot.hosts })),
     );
-  return { windows, extras: saved.extras ?? [], rules: saved.rules };
+  const extras = (saved.extras ?? []).map((x) => ({
+    ...x,
+    times: x.times.map((t) => (typeof t === "string" ? { from: t, hosts: "Volley Committee" } : t)),
+  }));
+  return { windows, extras, rules: saved.rules };
 }

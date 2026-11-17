@@ -3,6 +3,11 @@ import type { ViewingGroup, ViewingWindow } from "@/lib/types";
 /* The viewing schedule's days, as people read them. Keep in step with the
    site's lib/viewings.js, which shows the timetable the same way. */
 
+/* Who can host an extra time, as Book a Tour names them ("Hosted by …").
+   The first is the default. Keep the website's EXTRA_HOSTS (its
+   lib/viewings.js) as the first one here. */
+export const EXTRA_HOSTS = ["Volley Committee", "Elaine", "Andries"];
+
 // Monday first, as people read a week; stored as 0 = Sunday … 6 = Saturday.
 export const WEEK = [1, 2, 3, 4, 5, 6, 0];
 export const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

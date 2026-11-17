@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { CalendarX2, Clock, Plus, Trash2, Users, X } from "lucide-react";
-import { button, Card, Field, inputClass, labelClass } from "@/components/ui";
+import { button, Card, Field, iconButtonDanger, inputClass, labelClass } from "@/components/ui";
 import SaveBar from "@/components/SaveBar";
 import EditModal from "@/components/EditModal";
 import CustomSelect from "@/components/CustomSelect";
 import { StringList, useSettingsForm } from "@/components/forms";
 import { useLeaveGuard } from "@/lib/navigation-guard";
 import { useDraftBackup, useSaveWhenOnline } from "@/lib/offline";
-import type { ViewingWindow, Viewings } from "@/lib/types";
-import { DAY_NAMES, daysLabel, WEEK } from "@/lib/viewings";
+import type { ViewingExtraTime, ViewingWindow, Viewings } from "@/lib/types";
+import { DAY_NAMES, daysLabel, EXTRA_HOSTS, WEEK } from "@/lib/viewings";
 import { saveViewings } from "./actions";
 import { DatePicker, TimePicker } from "@/components/DatePicker";
 
@@ -56,11 +56,11 @@ function dayTimes(v: Viewings, house: string, iso: string) {
     if (!w.weekdays.includes(day) || !w.houses.includes(house)) continue;
     for (let t = toMinutes(w.from); t + v.rules.minutes <= toMinutes(w.to); t += v.rules.step) weekly.add(toTime(t));
   }
-  const extras = (v.extras.find((x) => x.house === house && x.date === iso)?.times ?? []).filter((t) => t && !weekly.has(t));
+  const extras = (v.extras.find((x) => x.house === house && x.date === iso)?.times ?? []).filter((t) => t.from && !weekly.has(t.from));
   return {
     day,
     weekly: [...weekly].sort(),
-    extras: [...extras].sort(),
+    extras: [...extras].sort((a, b) => a.from.localeCompare(b.from)),
     closed: v.rules.closed.includes(iso),
     later: iso > addDays(todayISO(), v.rules.bookAheadDays),
   };
@@ -135,16 +135,20 @@ export default function ScheduleEditor({
 
   /* Extra times: added and removed right in the preview, for the building
      and date picked there. A date's entry goes once its last time does. */
-  const setExtraTimes = (house: string, date: string, times: string[]) => {
+  const setExtraTimes = (house: string, date: string, times: ViewingExtraTime[]) => {
     const rest = v.extras.filter((x) => !(x.house === house && x.date === date));
-    const extras = times.length ? [...rest, { house, date, times: [...new Set(times)].sort() }] : rest;
+    const sorted = [...times].sort((a, b) => a.from.localeCompare(b.from));
+    const extras = times.length ? [...rest, { house, date, times: sorted }] : rest;
     setV({ ...v, extras: extras.sort((a, b) => a.date.localeCompare(b.date) || a.house.localeCompare(b.house)) });
   };
   const addExtra = (time: string) => {
-    if (!preview || !time || preview.weekly.includes(time)) return;
-    setExtraTimes(previewHouse, previewDate, [...preview.extras, time]);
+    if (!preview || !time || preview.weekly.includes(time) || preview.extras.some((t) => t.from === time)) return;
+    setExtraTimes(previewHouse, previewDate, [...preview.extras, { from: time, hosts: EXTRA_HOSTS[0] }]);
   };
-  const removeExtra = (time: string) => preview && setExtraTimes(previewHouse, previewDate, preview.extras.filter((t) => t !== time));
+  const removeExtra = (time: string) =>
+    preview && setExtraTimes(previewHouse, previewDate, preview.extras.filter((t) => t.from !== time));
+  const setExtraHost = (time: string, hosts: string) =>
+    preview && setExtraTimes(previewHouse, previewDate, preview.extras.map((t) => (t.from === time ? { ...t, hosts } : t)));
   // Every date with extra times still to come, to jump the preview to.
   const upcoming = v.extras.filter((x) => x.date >= todayISO() && x.times.length);
 
@@ -279,18 +283,10 @@ export default function ScheduleEditor({
                     ))}
                     {preview.extras.map((t) => (
                       <span
-                        key={t}
-                        className="inline-flex items-center gap-1 rounded-md border border-lightGreen/40 bg-lemon/50 py-1 pr-1 pl-2 text-xs font-medium text-ink tabular-nums"
+                        key={t.from}
+                        className="rounded-md border border-lightGreen/40 bg-lemon/50 px-2 py-1 text-xs font-medium text-ink tabular-nums"
                       >
-                        {t}
-                        <button
-                          type="button"
-                          onClick={() => removeExtra(t)}
-                          aria-label={`Remove the extra time ${t}`}
-                          className="cursor-pointer rounded p-0.5 text-ink/50 transition-colors hover:bg-white/70 hover:text-brick"
-                        >
-                          <X className="size-3" />
-                        </button>
+                        {t.from}
                       </span>
                     ))}
                     <TimePicker
@@ -307,9 +303,34 @@ export default function ScheduleEditor({
                     </p>
                   )}
                   {preview.extras.length > 0 && (
-                    <p className="mt-2 flex items-center gap-1.5 text-xs text-ink/55">
-                      <span className="size-2.5 rounded-sm border border-lightGreen/40 bg-lemon/50" /> Added for this date only. Save to put them live.
-                    </p>
+                    <div className="mt-4 rounded-lg border border-lightGreen/30 bg-white">
+                      <p className="flex items-center gap-1.5 border-b border-ink/8 px-3 py-2 text-xs text-ink/60">
+                        <span className="size-2.5 rounded-sm border border-lightGreen/40 bg-lemon/50" />
+                        Extra times, for this date only. Save to put them live.
+                      </p>
+                      <ul className="divide-y divide-ink/8">
+                        {preview.extras.map((t) => (
+                          <li key={t.from} className="flex items-center gap-3 px-3 py-2">
+                            <span className="w-12 shrink-0 text-sm font-medium text-ink tabular-nums">{t.from}</span>
+                            <span className="shrink-0 text-xs text-ink/50">Hosted by</span>
+                            <CustomSelect
+                              value={t.hosts}
+                              onChange={(hosts) => setExtraHost(t.from, hosts)}
+                              options={[...new Set([...EXTRA_HOSTS, t.hosts])].map((h) => ({ value: h, label: h }))}
+                              className="min-w-0 flex-1 sm:max-w-56"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeExtra(t.from)}
+                              className={`${iconButtonDanger} ml-auto`}
+                              aria-label={`Remove the extra time ${t.from}`}
+                            >
+                              <X className="size-4" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                   {preview.later && (
                     <p className="mt-2 text-xs text-ink/55">

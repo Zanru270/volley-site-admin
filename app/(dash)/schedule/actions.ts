@@ -26,7 +26,8 @@ function check(v: Viewings, houses: string[]): string | null {
     if (!houses.includes(x.house)) return `${name}: pick a building.`;
     if (!DATE.test(x.date)) return `${name}: pick a date.`;
     if (!x.times.length) return `${name}: add at least one time.`;
-    if (x.times.some((t) => !TIME.test(t))) return `${name}: every time needs to be filled in.`;
+    if (x.times.some((t) => !TIME.test(t.from))) return `${name}: every time needs to be filled in.`;
+    if (x.times.some((t) => !t.hosts.trim())) return `${name}: pick who hosts each time.`;
   }
   const r = v.rules;
   const whole = (n: number, min: number) => Number.isInteger(n) && n >= min;
@@ -55,7 +56,14 @@ export async function saveViewings(input: Viewings): Promise<Result> {
       .sort((a, b) => a.from.localeCompare(b.from)),
     // Tidied: each date's times in order, once each; dates gone by dropped.
     extras: (input.extras ?? [])
-      .map((x) => ({ house: x.house, date: x.date, times: [...new Set(x.times.filter(Boolean))].sort() }))
+      .map((x) => ({
+        house: x.house,
+        date: x.date,
+        times: x.times
+          .filter((t, i, all) => t.from && all.findIndex((o) => o.from === t.from) === i)
+          .map((t) => ({ from: t.from, hosts: t.hosts.trim() }))
+          .sort((a, b) => a.from.localeCompare(b.from)),
+      }))
       .filter((x) => !x.date || x.date >= todayISO())
       .sort((a, b) => a.date.localeCompare(b.date) || a.house.localeCompare(b.house)),
     rules: {
