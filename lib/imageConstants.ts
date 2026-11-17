@@ -15,7 +15,7 @@ export const IMAGE_PRESETS = {
     recommendedWidth: 3840,
     slotLabel: "full-screen photos",
   },
-  // A building's hero slideshow (LocationHero): 56vw wide on desktop.
+  // A building's hero slideshow (LocationHero): 66vw wide on desktop.
   slide: {
     recommendedWidth: 2400,
     slotLabel: "slideshow photos",
@@ -35,7 +35,7 @@ export const IMAGE_PRESETS = {
     recommendedWidth: 960,
     slotLabel: "card photos",
   },
-  // "The res your dad wishes" photo: max-w-3xl, 672px.
+  // "The res your dad wishes" photo: 555px wide (DadSection's max-w-138.75).
   feature: {
     recommendedWidth: 1440,
     slotLabel: "photos",
@@ -67,7 +67,7 @@ export type ImagePreset = keyof typeof IMAGE_PRESETS;
 /** Slots the site always shows at one fixed shape (width / height). Not
     "Take a look around": it shows each photo in its own shape. */
 export const SLOT_ASPECTS = {
-  feature: 8 / 5, // DadSection: aspect-8/5
+  feature: 5 / 3, // DadSection: aspect-5/3
   map: 3509 / 2210, // LocationMap: aspect-3509/2210 (Baileys' map)
   articleHero: 757 / 673, // ArticleView's title photo: aspect-757/673
   articleImage: 3 / 2, // an article's photo block: aspect-3/2
@@ -89,7 +89,7 @@ export const FOCAL_PREVIEWS = {
     { label: "Desktop", aspect: 16 / 9 },
     { label: "Phone", aspect: 9 / 10 },
   ],
-  // LocationHero slides: 56vw × 35vw on desktop, 84vw × 62vw on a phone.
+  // LocationHero slides: 66vw × 41.25vw on desktop, 84vw × 62vw on a phone.
   slide: [
     { label: "Desktop", aspect: 56 / 35 },
     { label: "Phone", aspect: 84 / 62 },

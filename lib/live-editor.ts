@@ -1,4 +1,6 @@
 import type { Article, Banner, HomePage, Location, WaitlistForm } from "@/lib/types";
+import type { CareersPage } from "@/lib/careers";
+import type { FooterSettings } from "@/lib/footer";
 
 /* The admin's half of the contract with the site's preview frames
    (../volley-site/lib/live-editor.js has the other half and the notes on
@@ -6,7 +8,7 @@ import type { Article, Banner, HomePage, Location, WaitlistForm } from "@/lib/ty
    must match that file, so change both together. Each live editor talks
    about one page: the home page, or a Volley Reader article. */
 
-export type PreviewPage = "home" | "article" | "location" | "waitlist";
+export type PreviewPage = "home" | "article" | "location" | "waitlist" | "careers" | "footer";
 
 export const PROTOCOL_VERSION = 1;
 export const EDITOR_SOURCE = "volley-editor";
@@ -27,6 +29,7 @@ export const HOME_FIELDS = [
   "photos.neighbourhoods",
   "photos.highlights",
   "photos.reader",
+  "dad.photo",
 ] as const;
 export type HomeField = (typeof HOME_FIELDS)[number];
 
@@ -54,18 +57,32 @@ export type LocationField = (typeof LOCATION_FIELDS)[number];
 export const WAITLIST_FIELDS = ["unitTypes"] as const;
 export type WaitlistField = (typeof WAITLIST_FIELDS)[number];
 
+// The careers page's: each list of points, and the jobs (edited on the Jobs page).
+export const CAREERS_FIELDS = ["hero", "manifesto", "signingUp", "upside", "bottomLine", "jobs"] as const;
+export type CareersField = (typeof CAREERS_FIELDS)[number];
+
+// The footer's: its social links, set in a card.
+export const FOOTER_FIELDS = ["social"] as const;
+export type FooterField = (typeof FOOTER_FIELDS)[number];
+
 type FieldOf<P extends PreviewPage> = P extends "home"
   ? HomeField
   : P extends "article"
     ? ArticleField
     : P extends "waitlist"
       ? WaitlistField
-      : LocationField;
+      : P extends "careers"
+        ? CareersField
+        : P extends "footer"
+          ? FooterField
+          : LocationField;
 const FIELDS: Record<PreviewPage, readonly string[]> = {
   home: HOME_FIELDS,
   article: ARTICLE_FIELDS,
   location: LOCATION_FIELDS,
   waitlist: WAITLIST_FIELDS,
+  careers: CAREERS_FIELDS,
+  footer: FOOTER_FIELDS,
 };
 
 const isFieldOf = <P extends PreviewPage>(page: P, value: unknown): value is FieldOf<P> =>
@@ -83,7 +100,11 @@ export type DraftOf<P extends PreviewPage> = P extends "home"
     ? Article
     : P extends "waitlist"
       ? WaitlistForm
-      : Location;
+      : P extends "careers"
+        ? CareersPage
+        : P extends "footer"
+          ? FooterSettings
+          : Location;
 
 export type EditorMessage<P extends PreviewPage> =
   | { type: "draft"; draft: DraftOf<P> }
@@ -105,6 +126,8 @@ export type PreviewMessage<P extends PreviewPage> =
   | { type: "select"; field: FieldOf<P> | null; rect: FrameRect | null; index?: number }
   | { type: "rect"; field: FieldOf<P>; rect: FrameRect; index?: number }
   | { type: "edit"; key: string; value: string }
+  // The page's height, as it changes, for a frame sized to fit it.
+  | { type: "size"; height: number }
   // Only ever parsed from an article's page.
   | BlockAction;
 
@@ -140,6 +163,10 @@ export function parsePreviewMessage<P extends PreviewPage>(data: unknown, page: 
       return typeof m.key === "string" && typeof m.value === "string" && m.value.length <= 5000
         ? { type: "edit", key: m.key, value: m.value }
         : null;
+    case "size":
+      return typeof m.height === "number" && Number.isFinite(m.height) && m.height >= 0 && m.height <= 20000
+        ? { type: "size", height: m.height }
+        : null;
     // The rest only come from an article's page; the editor checks the
     // places against its draft.
     case "move":
@@ -159,11 +186,15 @@ export function parsePreviewMessage<P extends PreviewPage>(data: unknown, page: 
 
 /* Never typed in place, but set in cards: on the home page its uploads,
    links and reviews; on an article everything but its wording. */
-export const HOME_NOT_INLINE = /^(hero\.video|welcome\.linkHref|welcome\.logos\b|reviews\.|photos\.)/;
+export const HOME_NOT_INLINE = /^(hero\.video|welcome\.linkHref|welcome\.logos\b|reviews\.|photos\.|dad\.(image|alt)\b)/;
 export const LOCATION_NOT_INLINE =
   /^(slug|photos|pricelist|status|summary|sort|updated_at|rooms\.(paymentPlans|types\.\d+\.(images|fee|badgeColor|label))|included\.\w+\.\d+\.icon)\b/;
 // The waitlist form's unit types are a list, set in its card.
 export const WAITLIST_NOT_INLINE = /^unitTypes\b/;
+// The careers page: all of it is wording, so nothing's held back.
+export const CAREERS_NOT_INLINE = /(?!)/;
+// The footer: its social links are set in their card.
+export const FOOTER_NOT_INLINE = /^social\b/;
 export const ARTICLE_NOT_INLINE = /^(id|slug|date|meta|image|hero|aspect|excerpt|published|sort|updated_at|body\.\d+\.(type|src|alt|images))\b/;
 
 /* Text typed on the preview, applied to the draft. `key` is the text's

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Badge, button, SaveButton } from "@/components/ui";
 import { useSettingsForm } from "@/components/forms";
+import SaveBar from "@/components/SaveBar";
 import { useToast } from "@/components/ToastProvider";
 import { VideoField } from "@/components/Upload";
 import {
@@ -32,7 +33,7 @@ import { saveHome } from "./actions";
 import { saveBanner } from "./banner-actions";
 import FaqManager from "./FaqManager";
 import { BannerFields, HighlightTabs, LogosList, ReviewsList, Text } from "./fields";
-import HomeForm, { homeBand } from "./HomeForm";
+import HomeForm, { DadPhoto, homeBand } from "./HomeForm";
 
 type CardLocation = Pick<Location, "slug" | "name" | "address" | "status" | "visibility" | "summary" | "photos" | "card_colour">;
 
@@ -92,6 +93,12 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
   "photos.reader": {
     title: "Photo under the Volley Reader",
     hint: "The full-screen photo the Volley Reader scrolls away to uncover, and the sticker on it. Removing the photo puts the website's own back.",
+    panel: true,
+    size: "lg",
+  },
+  "dad.photo": {
+    title: "The res your dad wishes he went to",
+    hint: "The closing photo. Its wording is typed straight onto the page. Removing it puts the website's own back; building pages set their own under each building.",
     panel: true,
     size: "lg",
   },
@@ -450,6 +457,8 @@ export default function HomeLiveEditor({
           />
         );
       }
+      case "dad.photo":
+        return <DadPhoto dad={home.dad} onChange={(patch) => set("dad", patch)} onNewUpload={onNewUpload} />;
       case "reviews.items":
         return (
           <>
@@ -502,6 +511,21 @@ export default function HomeLiveEditor({
           {cardBody(active)}
         </FieldCard>
       )}
+
+      {/* The reminder at the foot of the window while anything's unsaved,
+          as on every page with a Save. */}
+      <SaveBar
+        inEditor
+        dirty={dirty}
+        pending={pending}
+        waiting={saveOnline.waiting}
+        onSave={saveOnline.save}
+        onDiscard={() => {
+          page.reset();
+          bannerForm.reset();
+          setCards(savedCards);
+        }}
+      />
     </div>
   );
 }

@@ -215,7 +215,8 @@ export type HomePage = {
   reviews: { title: string; items: Review[] };
   beat: { script: string; caps: string };
   newsletter: { title: string; intro: string; consent: string; button: string; done: string };
-  dad: { line1: string; line2: string; script: string };
+  // `image` and `alt`: the photo, empty for the website's own (HOME_DAD_PHOTO).
+  dad: { line1: string; line2: string; script: string; image: string; alt: string };
   // The three full-screen photos between sections, and their stickers.
   photos: Record<HomeBand, HomePhoto>;
 };

@@ -5,10 +5,11 @@ import { Loader2, Save } from "lucide-react";
 import { button } from "@/components/ui";
 import ConfirmationModal from "@/components/ConfirmationModal";
 
-/* The form pages' one save (the schedule, the waitlist form, the home
-   page's form view): a bar floating at the foot of the window that comes up
-   once something changes, with Discard (after a confirm) and Save. Nothing
-   on these pages saves until it's pressed. `waiting`: pressed while
+/* The reminder on every page with a Save: a bar floating at the foot of
+   the window that comes up once something changes, with Discard (after a
+   confirm) and Save. On the form pages (the schedule) it's the one Save;
+   in the live editors (`inEditor`) it's beside the Save in their top bar,
+   so unsaved work is hard to miss. Nothing saves until one is pressed. `waiting`: pressed while
    offline, it saves once the connection's back (lib/offline.ts). */
 export default function SaveBar({
   dirty,
@@ -16,12 +17,16 @@ export default function SaveBar({
   waiting = false,
   onSave,
   onDiscard,
+  inEditor = false,
 }: {
   dirty: boolean;
   pending: boolean;
   waiting?: boolean;
   onSave: () => void;
   onDiscard: () => void;
+  // In a live editor: drawn over its full-window layer (z-45), still under
+  // the sidebar and the drawers.
+  inEditor?: boolean;
 }) {
   const [confirming, setConfirming] = useState(false);
   const shown = dirty || pending;
@@ -31,7 +36,7 @@ export default function SaveBar({
       <div
         aria-hidden={!shown}
         inert={!shown}
-        className={`pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 transition-[opacity,translate] duration-200 md:pl-25 ${
+        className={`pointer-events-none fixed inset-x-0 bottom-4 ${inEditor ? "z-50" : "z-40"} flex justify-center px-4 transition-[opacity,translate] duration-200 md:pl-25 ${
           shown ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
         }`}
       >

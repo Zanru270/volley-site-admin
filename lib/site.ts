@@ -39,9 +39,26 @@ export const HOME_PHOTOS: Record<HomeBand, HomePhoto> = {
   },
 };
 
-// A saved home page with its photos filled in (see HOME_PHOTOS).
-export const withHomePhotos = <T extends { photos?: Partial<Record<HomeBand, HomePhoto>> }>(home: T) => ({
+/* The photo in "The res your dad wishes he went to!" as the website has it
+   (../volley-site/content/home.json, `dad`): what shows until one's
+   uploaded, and what removing it goes back to. */
+export const HOME_DAD_PHOTO = {
+  image: "/images/YourDad.jpeg",
+  alt: "A dad in a cap and field jacket, smiling by the water",
+};
+
+// A saved home page with its photos filled in (see HOME_PHOTOS and HOME_DAD_PHOTO).
+export const withHomePhotos = <
+  T extends { photos?: Partial<Record<HomeBand, HomePhoto>>; dad: { image?: string; alt?: string } },
+>(
+  home: T,
+) => ({
   ...home,
+  dad: {
+    ...home.dad,
+    image: home.dad.image || HOME_DAD_PHOTO.image,
+    alt: home.dad.image ? (home.dad.alt ?? "") : HOME_DAD_PHOTO.alt,
+  },
   photos: {
     neighbourhoods: home.photos?.neighbourhoods ?? HOME_PHOTOS.neighbourhoods,
     highlights: home.photos?.highlights ?? HOME_PHOTOS.highlights,

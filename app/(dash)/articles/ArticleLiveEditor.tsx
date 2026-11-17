@@ -1,5 +1,6 @@
 "use client";
 
+import SaveBar from "@/components/SaveBar";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { EyeOff, Globe, Trash2 } from "lucide-react";
@@ -112,7 +113,8 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
           const next = applyInlineEdit(old, message.key, message.value, ARTICLE_NOT_INLINE);
           return message.key === "title" && !slugTouched ? { ...next, slug: slugify(next.title) } : next;
         });
-      else onBlockAction(message);
+      // The page's height ("size") is for frames fitted to it; this one scrolls.
+      else if (message.type !== "size") onBlockAction(message);
     },
   });
 
@@ -372,6 +374,10 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
         variant="warning"
         isLoading={pending}
       />
+
+      {/* The reminder at the foot of the window while anything's unsaved,
+          as on every page with a Save. */}
+      <SaveBar inEditor dirty={isNew || dirty} pending={pending} waiting={saveOnline.waiting} onSave={saveOnline.save} onDiscard={() => setDraft(saved)} />
     </div>
   );
 }

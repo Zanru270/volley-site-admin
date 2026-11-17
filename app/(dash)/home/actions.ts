@@ -100,6 +100,8 @@ export async function saveHome(input: HomePage): Promise<Result> {
       line1: text(input.dad?.line1),
       line2: text(input.dad?.line2),
       script: text(input.dad?.script),
+      image: text(input.dad?.image),
+      alt: text(input.dad?.alt),
     },
     photos: {
       neighbourhoods: band(input, "neighbourhoods"),

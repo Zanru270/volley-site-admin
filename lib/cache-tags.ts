@@ -9,6 +9,8 @@ export const CACHE_TAGS = {
   LOCATIONS: "locations",
   VIEWINGS: "viewings",
   WAITLIST_FORM: "waitlist-form",
+  CAREERS: "careers",
+  FOOTER: "footer",
 } as const;
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];

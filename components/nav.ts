@@ -1,4 +1,5 @@
 import {
+  Briefcase,
   Building2,
   CalendarClock,
   CalendarDays,
@@ -7,6 +8,8 @@ import {
   Home,
   Inbox,
   LayoutDashboard,
+  PanelBottom,
+  UserSearch,
   Users,
 } from "lucide-react";
 
@@ -35,6 +38,7 @@ export const NAV_GROUPS: { title: string; pages: NavPage[] }[] = [
       },
       { name: "Buildings", href: "/buildings", icon: Building2, keywords: "locations residences rooms fees" },
       { name: "Volley Reader", href: "/articles", icon: FileText, keywords: "articles blog news" },
+      { name: "Footer", href: "/footer", icon: PanelBottom, keywords: "social links instagram facebook tiktok linkedin" },
     ],
   },
   {
@@ -53,6 +57,24 @@ export const NAV_GROUPS: { title: string; pages: NavPage[] }[] = [
         href: "/waitlist/interviews",
         icon: CalendarDays,
         keywords: "interview calendar schedule elaine",
+      },
+    ],
+  },
+  {
+    title: "Careers",
+    pages: [
+      {
+        name: "Careers page",
+        href: "/careers",
+        icon: FileText,
+        keywords: "careers wording work at volley manifesto",
+      },
+      { name: "Jobs", href: "/careers/jobs", icon: Briefcase, keywords: "careers jobs openings roles vacancies hiring" },
+      {
+        name: "Job applications",
+        href: "/careers/applications",
+        icon: UserSearch,
+        keywords: "careers cv cvs applicants candidates hiring interviews",
       },
     ],
   },

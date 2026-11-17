@@ -1,5 +1,6 @@
 "use client";
 
+import SaveBar from "@/components/SaveBar";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { IdCard } from "lucide-react";
@@ -493,6 +494,10 @@ export default function BuildingLiveEditor({
           {cardBody(active)}
         </FieldCard>
       )}
+
+      {/* The reminder at the foot of the window while anything's unsaved,
+          as on every page with a Save. */}
+      <SaveBar inEditor dirty={dirty} pending={pending} waiting={saveOnline.waiting} onSave={saveOnline.save} onDiscard={() => setDraft(saved)} />
     </div>
   );
 }

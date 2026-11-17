@@ -4,10 +4,11 @@ import { ArrowRight } from "lucide-react";
 import { button, CountChip, inputClass, labelClass, subPanel } from "@/components/ui";
 import FormSections from "@/components/FormSections";
 import { VideoField } from "@/components/Upload";
-import { buildingName, HOME_PHOTOS, type Visibility } from "@/lib/site";
+import { buildingName, HOME_DAD_PHOTO, HOME_PHOTOS, type Visibility } from "@/lib/site";
+import { SLOT_ASPECTS } from "@/lib/imageConstants";
 import type { Banner, FaqRow, HomeBand, HomePage, HomePhoto, Location } from "@/lib/types";
 import CardFields, { type CardDetails } from "../buildings/CardFields";
-import { Band } from "../buildings/PhotosEditor";
+import { Band, Upload } from "../buildings/PhotosEditor";
 import FaqManager from "./FaqManager";
 import { Area, BannerFields, HighlightTabs, LogosList, ReviewsList, Text } from "./fields";
 
@@ -19,6 +20,36 @@ export const homeBand = (key: HomeBand, band: { image?: string; sticker?: string
   band?.image
     ? { image: band.image, sticker: band.sticker ?? "", stickerAlt: band.stickerAlt ?? "" }
     : HOME_PHOTOS[key];
+
+/* The photo in "The res your dad wishes he went to!", and its alt text:
+   the same crop, focal point and shape as a building's own (its "dad"
+   slot). Removing it puts the website's own back. */
+export function DadPhoto({
+  dad,
+  onChange,
+  onNewUpload,
+}: {
+  dad: HomePage["dad"];
+  onChange: (patch: Pick<HomePage["dad"], "image" | "alt">) => void;
+  onNewUpload: (url: string) => void;
+}) {
+  return (
+    <>
+      <Upload
+        value={dad.image}
+        onChange={(image) => onChange(image ? { image, alt: dad.alt } : HOME_DAD_PHOTO)}
+        preset="feature"
+        aspect={SLOT_ASPECTS.feature}
+        onNewUpload={onNewUpload}
+      />
+      <Text
+        label="Description for screen readers"
+        value={dad.alt}
+        onChange={(alt) => onChange({ image: dad.image, alt })}
+      />
+    </>
+  );
+}
 
 /* The home page as a form, section by section in the order the page shows
    them: the live editor's "Form view", in its side panel. It edits the
@@ -308,7 +339,7 @@ export default function HomeForm({
         {
           id: "dad",
           title: "Dad",
-          description: "The closing photo, with a heading above it and a script line below. Also on every location page.",
+          description: "The closing photo, with a heading above it and a script line below. The wording is on every building page too; the photo is the home page's own.",
           content: (
             <>
               <div className="grid gap-6 sm:grid-cols-2">
@@ -316,6 +347,11 @@ export default function HomeForm({
                 <Text label="Heading, line 2" value={f.dad.line2} onChange={(v) => set("dad", { line2: v })} />
               </div>
               <Text label="Script line under the photo" value={f.dad.script} onChange={(v) => set("dad", { script: v })} />
+              <div className="space-y-4 border-t border-ink/10 pt-6">
+                <span className={labelClass}>Photo</span>
+                <DadPhoto dad={f.dad} onChange={(patch) => set("dad", patch)} onNewUpload={onNewUpload} />
+                <p className="text-xs text-ink/50">Removing it puts the website&apos;s own photo back. Building pages set their own under each building.</p>
+              </div>
             </>
           ),
         },

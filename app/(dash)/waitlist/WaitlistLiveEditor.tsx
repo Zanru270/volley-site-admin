@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { useRouter } from "next/navigation";
 import { SaveButton } from "@/components/ui";
 import { useSettingsForm } from "@/components/forms";
+import SaveBar from "@/components/SaveBar";
 import {
   cardPosition,
   EditorHeader,
@@ -42,7 +43,7 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
    Nothing reaches the website until Save. */
 export default function WaitlistLiveEditor({ initial, preview }: { initial: WaitlistForm; preview: PreviewToken }) {
   const router = useRouter();
-  const { value: draft, setValue, saved, dirty, pending, save } = useSettingsForm(initial, saveWaitlistForm);
+  const { value: draft, setValue, saved, dirty, pending, save, reset } = useSettingsForm(initial, saveWaitlistForm);
   const [device, setDevice] = useState<Device>("desktop");
   const [active, setActive] = useState<Card | null>(null);
   const [anchor, setAnchor] = useState<FrameRect | null>(null);
@@ -144,6 +145,10 @@ export default function WaitlistLiveEditor({ initial, preview }: { initial: Wait
           )}
         </FieldCard>
       )}
+
+      {/* The reminder at the foot of the window while anything's unsaved,
+          as on every page with a Save. */}
+      <SaveBar inEditor dirty={dirty} pending={pending} waiting={saveOnline.waiting} onSave={saveOnline.save} onDiscard={reset} />
     </div>
   );
 }
