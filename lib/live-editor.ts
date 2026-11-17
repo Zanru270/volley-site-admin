@@ -190,7 +190,9 @@ export function parsePreviewMessage<P extends PreviewPage>(data: unknown, page: 
 
 /* Never typed in place, but set in cards: on the home page its uploads,
    links and reviews; on an article everything but its wording. */
-export const HOME_NOT_INLINE = /^(hero\.video|welcome\.linkHref|welcome\.logos\b|reviews\.|photos\.|dad\.(image|alt)\b)/;
+// The photos are set in their cards, apart from the lines typed over two of them.
+export const HOME_NOT_INLINE =
+  /^(hero\.video|welcome\.linkHref|welcome\.logos\b|reviews\.|photos\.(?!(highlights|reader)\.(eyebrow|title)$)|dad\.(image|alt)\b)/;
 export const LOCATION_NOT_INLINE =
   /^(slug|photos|pricelist|status|summary|sort|updated_at|rooms\.(paymentPlans|types\.\d+\.(images|fee|badgeColor|label))|included\.\w+\.\d+\.icon)\b/;
 // The waitlist form's unit types are a list, set in its card.

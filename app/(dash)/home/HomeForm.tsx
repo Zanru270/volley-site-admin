@@ -16,10 +16,22 @@ type CardLocation = Pick<Location, "slug" | "name" | "address" | "status" | "vis
 
 /* A photo band as the home page keeps it: removing the photo puts the
    website's own back. */
-export const homeBand = (key: HomeBand, band: { image?: string; sticker?: string; stickerAlt?: string } | undefined): HomePhoto =>
-  band?.image
-    ? { image: band.image, sticker: band.sticker ?? "", stickerAlt: band.stickerAlt ?? "" }
-    : HOME_PHOTOS[key];
+// The lines typed over it stay, whichever photo it has.
+export const homeBand = (
+  key: HomeBand,
+  band: { image?: string; sticker?: string; stickerAlt?: string; stickerPosition?: string; eyebrow?: string; title?: string } | undefined,
+): HomePhoto => ({
+  ...(band?.image
+    ? {
+        image: band.image,
+        sticker: band.sticker ?? "",
+        stickerAlt: band.stickerAlt ?? "",
+        ...(band.stickerPosition ? { stickerPosition: band.stickerPosition } : {}),
+      }
+    : HOME_PHOTOS[key]),
+  eyebrow: band?.eyebrow ?? "",
+  title: band?.title ?? "",
+});
 
 /* The photo in "The res your dad wishes he went to!", and its alt text:
    the same crop, focal point and shape as a building's own (its "dad"

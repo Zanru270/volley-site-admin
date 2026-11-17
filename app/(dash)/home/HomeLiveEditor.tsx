@@ -90,13 +90,13 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
   },
   "photos.highlights": {
     title: "Photo under the highlights",
-    hint: "The full-screen photo the highlights scroll away to uncover, and the sticker on it. Removing the photo puts the website's own back.",
+    hint: "The full-screen photo the highlights scroll away to uncover, and the sticker on it. Its two lines are typed straight onto the photo. Removing the photo puts the website's own back.",
     panel: true,
     size: "lg",
   },
   "photos.reader": {
     title: "Photo under the Volley Reader",
-    hint: "The full-screen photo the Volley Reader scrolls away to uncover, and the sticker on it. Removing the photo puts the website's own back.",
+    hint: "The full-screen photo the Volley Reader scrolls away to uncover, and the sticker on it. Its two lines are typed straight onto the photo. Removing the photo puts the website's own back.",
     panel: true,
     size: "lg",
   },

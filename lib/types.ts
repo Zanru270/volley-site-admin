@@ -133,7 +133,18 @@ export type RoomType = {
 /* A building's photos, by slot (volley-site/lib/locations.js describes
    each). A slot left out keeps the website's own. */
 export type Photo = { src: string; alt: string };
-export type PhotoBand = { image: string; sticker?: string; stickerAlt?: string };
+// A full-screen photo between sections: its sticker, and the two lines
+// typed over it on the page (empty shows none).
+// `stickerPosition`: its corner (STICKER_POSITIONS in lib/site.ts); missing
+// keeps the one that photo always had.
+export type PhotoBand = {
+  image: string;
+  sticker?: string;
+  stickerAlt?: string;
+  stickerPosition?: string;
+  eyebrow?: string;
+  title?: string;
+};
 export type BuildingPhotos = {
   card?: string;
   slides?: Photo[];
@@ -261,7 +272,17 @@ export type HomePage = {
   photos: Record<HomeBand, HomePhoto>;
 };
 export type HomeBand = "neighbourhoods" | "highlights" | "reader";
-export type HomePhoto = { image: string; sticker: string; stickerAlt: string };
+// The lines over it are typed onto the page (the photos under the
+// highlights and the Volley Reader; the one under Locations has its own,
+// in `neighbourhoods`). Empty shows none.
+export type HomePhoto = {
+  image: string;
+  sticker: string;
+  stickerAlt: string;
+  stickerPosition?: string;
+  eyebrow?: string;
+  title?: string;
+};
 
 // The timetable as it may be saved: in the older shape, groups of days.
 export type SavedViewings = Omit<Viewings, "windows" | "extras"> & {

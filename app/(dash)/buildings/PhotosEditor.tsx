@@ -4,7 +4,7 @@ import { Field, inputClass, labelClass } from "@/components/ui";
 import ImageUploader from "@/components/ImageUploader";
 import PhotoGallery from "@/components/PhotoGallery";
 import { FOCAL_PREVIEWS, SLOT_ASPECTS, type ImagePreset } from "@/lib/imageConstants";
-import { siteAsset } from "@/lib/site";
+import { siteAsset, STICKER_POSITIONS } from "@/lib/site";
 import type { BuildingPhotos, PhotoBand } from "@/lib/types";
 
 /* Every photo on a building's page (its card's is with the card details,
@@ -52,15 +52,19 @@ export function Upload({
   );
 }
 
-// A full-screen photo band, with the sticker that can sit on it.
+/* A full-screen photo band, with the sticker that can sit on it and the
+   corner it sits in. `defaultPosition` is where that photo's sticker has
+   always been, shown picked until another is. */
 export function Band({
   band,
   onChange,
   onNewUpload,
+  defaultPosition = "top-right",
 }: {
   band: PhotoBand | undefined;
   onChange: (band: PhotoBand | undefined) => void;
   onNewUpload: (url: string) => void;
+  defaultPosition?: string;
 }) {
   const set = (patch: Partial<PhotoBand>) => {
     const next = { image: "", ...band, ...patch };
@@ -88,11 +92,56 @@ export function Band({
           <input
             value={band.stickerAlt ?? ""}
             onChange={(e) => set({ stickerAlt: e.target.value })}
-            placeholder="What the sticker says"
-            aria-label="Sticker description"
+            placeholder="Alt text for sticker"
+            aria-label="Alt text for sticker"
             className={inputClass}
           />
         )}
+        {band?.sticker && (
+          <StickerCorner
+            value={band.stickerPosition || defaultPosition}
+            onChange={(stickerPosition) => set({ stickerPosition })}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Which corner of the photo the sticker sits in: four buttons laid out as
+   the corners they stand for, each with a dot in its own. */
+function StickerCorner({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <div className="space-y-1.5 pt-1">
+      <span className="block text-xs text-ink/55">Where it sits</span>
+      <div role="radiogroup" aria-label="Where the sticker sits" className="grid grid-cols-2 gap-1.5">
+        {STICKER_POSITIONS.map((p) => {
+          const on = value === p.value;
+          const [edge, side] = p.value.split("-");
+          return (
+            <button
+              key={p.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => onChange(p.value)}
+              title={p.label}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-[11px] transition-colors ${
+                on ? "border-ink bg-white font-medium text-ink shadow-sm" : "border-ink/12 bg-white text-ink/55 hover:border-ink/35 hover:text-ink"
+              }`}
+            >
+              {/* The photo, small, with the sticker as a dot in its corner. */}
+              <span aria-hidden="true" className="relative size-4 shrink-0 rounded-[3px] border border-current">
+                <span
+                  className={`absolute size-1.5 rounded-full bg-current ${edge === "top" ? "top-0.5" : "bottom-0.5"} ${
+                    side === "left" ? "left-0.5" : "right-0.5"
+                  }`}
+                />
+              </span>
+              {p.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -219,7 +268,13 @@ export function PhotoSlot({
       );
     case "neighbourhood":
       return (
-        <Band band={photos.neighbourhood} onChange={(neighbourhood) => set("neighbourhood", neighbourhood)} onNewUpload={onNewUpload} />
+        <Band
+          band={photos.neighbourhood}
+          onChange={(neighbourhood) => set("neighbourhood", neighbourhood)}
+          onNewUpload={onNewUpload}
+          // Its sticker has always sat bottom left.
+          defaultPosition="bottom-left"
+        />
       );
     case "gallery":
       return (

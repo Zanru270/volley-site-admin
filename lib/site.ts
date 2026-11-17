@@ -50,6 +50,8 @@ export const HOME_DAD_PHOTO = {
 // Goings on's wording until it's saved (../volley-site/content/home.json, `goingsOn`).
 export const HOME_GOINGS_ON = { title: "Goings on", link: "preview all here", cardLink: "Read now" };
 
+const withLines = (photo: HomePhoto): HomePhoto => ({ ...photo, eyebrow: photo.eyebrow ?? "", title: photo.title ?? "" });
+
 /* A saved home page with its photos filled in (see HOME_PHOTOS and
    HOME_DAD_PHOTO), and Goings on's wording, for a page saved before it. */
 export const withHomePhotos = <
@@ -68,10 +70,12 @@ export const withHomePhotos = <
     image: home.dad.image || HOME_DAD_PHOTO.image,
     alt: home.dad.image ? (home.dad.alt ?? "") : HOME_DAD_PHOTO.alt,
   },
+  // The lines over each are always there (empty for none), so they can be
+  // typed onto the page.
   photos: {
-    neighbourhoods: home.photos?.neighbourhoods ?? HOME_PHOTOS.neighbourhoods,
-    highlights: home.photos?.highlights ?? HOME_PHOTOS.highlights,
-    reader: home.photos?.reader ?? HOME_PHOTOS.reader,
+    neighbourhoods: withLines(home.photos?.neighbourhoods ?? HOME_PHOTOS.neighbourhoods),
+    highlights: withLines(home.photos?.highlights ?? HOME_PHOTOS.highlights),
+    reader: withLines(home.photos?.reader ?? HOME_PHOTOS.reader),
   },
 });
 
@@ -147,6 +151,18 @@ export const HERO_COLOUR = "#FF9F9A";
 export const HERO_TITLE_COLOUR = "#7E3225";
 // The menu bar on a building's page: the website's ink.
 export const NAV_COLOUR = "#1A1A18";
+
+/* Where a sticker can sit on a full-screen photo between sections
+   (../volley-site/lib/stickers.js: keep the two in step). */
+export const STICKER_POSITIONS = [
+  { value: "top-left", label: "Top left" },
+  { value: "top-right", label: "Top right" },
+  { value: "bottom-left", label: "Bottom left" },
+  { value: "bottom-right", label: "Bottom right" },
+] as const;
+export type StickerPosition = (typeof STICKER_POSITIONS)[number]["value"];
+export const isStickerPosition = (value: unknown): value is StickerPosition =>
+  STICKER_POSITIONS.some((p) => p.value === value);
 
 // A colour the picker can save: #rgb or #rrggbb.
 export const isHexColour = (value: string) => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);

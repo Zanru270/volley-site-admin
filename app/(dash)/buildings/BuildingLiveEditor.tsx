@@ -51,7 +51,7 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
   // Every photo's card opens as a panel, with room for the uploader.
   reveal: {
     title: "Photo under the intro",
-    hint: "The full-screen photo the intro scrolls away to uncover, and its sticker.",
+    hint: "The full-screen photo the intro scrolls away to uncover, and its sticker. Its two lines are typed straight onto the photo.",
     panel: true,
     size: "lg",
   },
@@ -64,7 +64,7 @@ const CARDS: Record<Card, { title: string; hint?: string; panel?: boolean; size?
   map: { title: "Map", hint: "Shown whole: its labels are part of the photo, so it's never cropped.", panel: true, size: "lg" },
   neighbourhood: {
     title: 'Photo under "A (really) great Location"',
-    hint: "The full-screen photo the write-up scrolls away to uncover, with the sticker in its corner.",
+    hint: "The full-screen photo the write-up scrolls away to uncover, with the sticker in its corner. Its two lines are typed straight onto the photo.",
     panel: true,
     size: "lg",
   },
@@ -238,7 +238,14 @@ export default function BuildingLiveEditor({
                     }),
                   },
                 }
-              : applyInlineEdit(old, message.key, message.value, LOCATION_NOT_INLINE),
+              : /^(reveal|neighbourhood)\.(eyebrow|title)$/.test(message.key) && old.photos?.[message.key.split(".")[0] as "reveal" | "neighbourhood"]
+                ? // The lines over the photo under the intro, or the
+                  // neighbourhood one: written even while there are none yet.
+                  (() => {
+                    const [slot, line] = message.key.split(".") as ["reveal" | "neighbourhood", "eyebrow" | "title"];
+                    return { ...old, photos: { ...old.photos, [slot]: { ...old.photos![slot]!, [line]: message.value } } };
+                  })()
+                : applyInlineEdit(old, message.key, message.value, LOCATION_NOT_INLINE),
         );
     },
   });
@@ -325,7 +332,15 @@ export default function BuildingLiveEditor({
         );
       case "reveal":
       case "neighbourhood":
-        return <Band band={photos[card]} onChange={(band) => setPhoto(card, band)} onNewUpload={onNewUpload} />;
+        return (
+          <Band
+            band={photos[card]}
+            onChange={(band) => setPhoto(card, band)}
+            onNewUpload={onNewUpload}
+            // The neighbourhood photo's sticker has always sat bottom left.
+            defaultPosition={card === "neighbourhood" ? "bottom-left" : "top-right"}
+          />
+        );
       case "community":
         return (
           <CommunityFields

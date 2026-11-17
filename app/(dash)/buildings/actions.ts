@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { revalidateSite } from "@/lib/revalidate";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { failed, saved, type Result } from "@/lib/result";
-import { BUILDING_COLOURS, isHexColour, isStatus, LOCATION_NAMES, PAGE_SECTIONS, VISIBILITIES, type Visibility } from "@/lib/site";
+import { BUILDING_COLOURS, isHexColour, isStatus, isStickerPosition, LOCATION_NAMES, PAGE_SECTIONS, VISIBILITIES, type Visibility } from "@/lib/site";
 import { after } from "next/server";
 import { deleteUploads } from "@/lib/media-actions";
 import { sweepUnusedUploads } from "@/lib/media-sweep";
@@ -36,8 +36,18 @@ function cleanCommunity(c: BuildingPhotos["community"]): BuildingPhotos["communi
    the website keeps its own photo for any slot left empty. */
 function cleanPhotos(input: BuildingPhotos | null | undefined): BuildingPhotos | null {
   if (!input) return null;
+  // With the two lines typed over it, if any.
   const band = (b: BuildingPhotos["reveal"]) =>
-    b?.image ? { image: text(b.image), sticker: text(b.sticker) || undefined, stickerAlt: text(b.stickerAlt) || undefined } : undefined;
+    b?.image
+      ? {
+          image: text(b.image),
+          sticker: text(b.sticker) || undefined,
+          stickerAlt: text(b.stickerAlt) || undefined,
+          stickerPosition: b.sticker && isStickerPosition(b.stickerPosition) ? b.stickerPosition : undefined,
+          eyebrow: text(b.eyebrow) || undefined,
+          title: text(b.title) || undefined,
+        }
+      : undefined;
   const out: BuildingPhotos = {
     card: text(input.card) || undefined,
     slides: photoList(input.slides),

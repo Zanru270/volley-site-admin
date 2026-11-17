@@ -8,7 +8,7 @@ import { sweepUnusedUploads } from "@/lib/media-sweep";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { failed, saved, type Result } from "@/lib/result";
 import type { HighlightCard, HomeBand, HomePage } from "@/lib/types";
-import { HOME_PHOTOS } from "@/lib/site";
+import { HOME_PHOTOS, isStickerPosition } from "@/lib/site";
 
 const text = (v: unknown) => String(v ?? "").trim();
 const list = (v: unknown) => (Array.isArray(v) ? v : []).map(text).filter(Boolean);
@@ -22,11 +22,21 @@ const cards = (v: unknown): HighlightCard[] =>
   }));
 
 // A photo band as saved: one emptied goes back to the website's own.
+// The lines typed over it are kept either way.
 const band = (input: HomePage, key: HomeBand) => {
+  const lines = { eyebrow: text(input.photos?.[key]?.eyebrow), title: text(input.photos?.[key]?.title) };
   const image = text(input.photos?.[key]?.image);
-  if (!image) return HOME_PHOTOS[key];
+  if (!image) return { ...HOME_PHOTOS[key], ...lines };
   const sticker = text(input.photos?.[key]?.sticker);
-  return { image, sticker, stickerAlt: sticker ? text(input.photos?.[key]?.stickerAlt) : "" };
+  const position = input.photos?.[key]?.stickerPosition;
+  return {
+    image,
+    sticker,
+    stickerAlt: sticker ? text(input.photos?.[key]?.stickerAlt) : "",
+    // Its corner, once one's been picked; missing keeps the photo's own.
+    ...(sticker && isStickerPosition(position) ? { stickerPosition: position } : {}),
+    ...lines,
+  };
 };
 
 export async function saveHome(input: HomePage): Promise<Result> {
