@@ -37,7 +37,7 @@ export async function addAdmin(input: {
   name: string;
   password: string;
 }): Promise<Result> {
-  const { supabase } = await requireAdmin();
+  await requireAdmin();
   const email = input.email.trim().toLowerCase();
   if (!EMAIL.test(email)) return { ok: false, message: "Check the email address." };
   if (input.password.length < 10)
@@ -55,7 +55,9 @@ export async function addAdmin(input: {
       await setPassword(email, input.password);
     }
 
-    const { error } = await supabase
+    // The service client: the admin list's rules let admins add and remove
+    // people but not edit them, and someone already on it is an edit.
+    const { error } = await createServiceClient()
       .from("admin_users")
       .upsert({ email, name: input.name.trim() })
       .select("email");
@@ -77,14 +79,16 @@ export async function updateAdmin(input: {
   name: string;
   password: string;
 }): Promise<Result> {
-  const { supabase } = await requireAdmin();
+  await requireAdmin();
   const email = input.email.trim().toLowerCase();
   if (input.password && input.password.length < 10)
     return { ok: false, message: "Use a password of at least 10 characters, or leave it empty to keep theirs." };
   if (input.password && spaced(input.password)) return { ok: false, message: SPACED };
 
   try {
-    const { data, error } = await supabase
+    // The service client, as the admin list's rules don't allow edits
+    // (requireAdmin above has checked it's an admin asking).
+    const { data, error } = await createServiceClient()
       .from("admin_users")
       .update({ name: input.name.trim() })
       .eq("email", email)
