@@ -5,7 +5,6 @@ import {
   CalendarClock,
   ChevronRight,
   FileText,
-  HelpCircle,
   MapPin,
 } from "lucide-react";
 import { articleDate } from "@/lib/articles";
@@ -14,6 +13,7 @@ import type { Article, Banner, Location, Viewings } from "@/lib/types";
 import { viewingDays } from "@/lib/viewings";
 import { Badge, button, SectionTitle, tableHead, td, th } from "@/components/ui";
 import ScheduleGlance from "./ScheduleGlance";
+import SubscribersTile, { type SubscriberCounts } from "./SubscribersTile";
 
 const formatDate = (iso: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -30,7 +30,7 @@ export type DashboardData = {
     Article,
     "id" | "slug" | "title" | "location" | "date" | "meta" | "sort" | "category" | "excerpt" | "image" | "published"
   >[];
-  faqTabs: string[];
+  subscribers: SubscriberCounts | null;
   locations: Pick<Location, "slug" | "name" | "address" | "rooms" | "updated_at">[];
   banner: Banner | null;
   viewings: Viewings | null;
@@ -40,15 +40,13 @@ export type DashboardData = {
 export default function DashboardView({
   firstName,
   articles: reader,
-  faqTabs,
+  subscribers,
   locations: residences,
   banner,
   viewings,
 }: DashboardData) {
   const published = reader.filter((a) => a.published).length;
   const drafts = reader.length - published;
-  const cool = faqTabs.filter((t) => t === "cool").length;
-  const faqCount = faqTabs.length;
   const roomTypes = residences.reduce((n, l) => n + (l.rooms?.types.length ?? 0), 0);
   const slots = viewings?.windows.length ?? 0;
   const days = viewings ? viewingDays(viewings.windows) : [];
@@ -59,13 +57,6 @@ export default function DashboardView({
       note: drafts ? `${plural(drafts, "draft")} waiting` : "No drafts",
       href: "/articles",
       icon: FileText,
-    },
-    {
-      label: "FAQs",
-      value: faqCount,
-      note: `${cool} cool, ${faqCount - cool} boring`,
-      href: "/home?open=faqs.list",
-      icon: HelpCircle,
     },
     {
       label: "Buildings",
@@ -162,23 +153,12 @@ export default function DashboardView({
         </Link>
 
         <div className="relative mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {stats.map((s) => (
-            <Link
-              key={s.label}
-              href={s.href}
-              className="group rounded-xl border border-ink/5 bg-white p-4 shadow-soft transition-colors hover:border-ink/25"
-            >
-              <span className="flex items-center gap-2.5 text-[13px] text-ink/70">
-                <span className="flex size-6 items-center justify-center rounded-md bg-bone/70 text-ink/55">
-                  <s.icon className="size-3.5" />
-                </span>
-                {s.label}
-              </span>
-              <span className="mt-3 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                <span className="text-3xl leading-none font-medium text-ink tabular-nums">{s.value}</span>
-                <span className="text-xs text-ink/50">{s.note}</span>
-              </span>
-            </Link>
+          {stats.slice(0, 1).map((s) => (
+            <StatTile key={s.label} {...s} />
+          ))}
+          <SubscribersTile counts={subscribers} />
+          {stats.slice(1).map((s) => (
+            <StatTile key={s.label} {...s} />
           ))}
         </div>
       </section>
@@ -298,5 +278,23 @@ export default function DashboardView({
         </section>
       </div>
     </div>
+  );
+}
+
+// One of the welcome panel's headline counts, opening its page.
+function StatTile({ label, value, note, href, icon: Icon }: { label: string; value: number; note: string; href: string; icon: React.ElementType }) {
+  return (
+    <Link href={href} className="group rounded-xl border border-ink/5 bg-white p-4 shadow-soft transition-colors hover:border-ink/25">
+      <span className="flex items-center gap-2.5 text-[13px] text-ink/70">
+        <span className="flex size-6 items-center justify-center rounded-md bg-bone/70 text-ink/55">
+          <Icon className="size-3.5" />
+        </span>
+        {label}
+      </span>
+      <span className="mt-3 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+        <span className="text-3xl leading-none font-medium text-ink tabular-nums">{value}</span>
+        <span className="text-xs text-ink/50">{note}</span>
+      </span>
+    </Link>
   );
 }
