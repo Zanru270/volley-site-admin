@@ -7,9 +7,31 @@ import { failed, type Result } from "@/lib/result";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// A password copied with a space at either end can't be typed back in.
+const spaced = (password: string) => password !== password.trim();
+const SPACED = "Take out the space at the start or end of the password.";
+
+/* Sets the password on the login with this email. False when there's no
+   such login. */
+async function setPassword(email: string, password: string) {
+  const service = createServiceClient();
+  const { data: list, error: listError } = await service.auth.admin.listUsers({ perPage: 1000 });
+  if (listError) throw listError;
+  const login = list.users.find((u) => u.email?.toLowerCase() === email);
+  if (!login) return false;
+  const { error } = await service.auth.admin.updateUserById(login.id, {
+    password,
+    // Typed in by an admin, so the address needs no confirming.
+    email_confirm: true,
+  });
+  if (error) throw error;
+  return true;
+}
+
 /* Gives someone access: creates their login (email + the password you
    choose, to pass on to them) and adds them to the admin list. If they
-   already have a login, it's kept and only the admin list changes. */
+   already have a login, it's kept but given the password you chose, so
+   the one you send them is the one that works. */
 export async function addAdmin(input: {
   email: string;
   name: string;
@@ -20,6 +42,7 @@ export async function addAdmin(input: {
   if (!EMAIL.test(email)) return { ok: false, message: "Check the email address." };
   if (input.password.length < 10)
     return { ok: false, message: "Use a password of at least 10 characters." };
+  if (spaced(input.password)) return { ok: false, message: SPACED };
 
   try {
     const { error: authError } = await createServiceClient().auth.admin.createUser({
@@ -27,8 +50,10 @@ export async function addAdmin(input: {
       password: input.password,
       email_confirm: true,
     });
-    if (authError && !/already|registered|exists/i.test(authError.message))
-      throw authError;
+    if (authError) {
+      if (!/already|registered|exists/i.test(authError.message)) throw authError;
+      await setPassword(email, input.password);
+    }
 
     const { error } = await supabase
       .from("admin_users")
@@ -56,6 +81,7 @@ export async function updateAdmin(input: {
   const email = input.email.trim().toLowerCase();
   if (input.password && input.password.length < 10)
     return { ok: false, message: "Use a password of at least 10 characters, or leave it empty to keep theirs." };
+  if (input.password && spaced(input.password)) return { ok: false, message: SPACED };
 
   try {
     const { data, error } = await supabase
@@ -66,15 +92,8 @@ export async function updateAdmin(input: {
     if (error) throw error;
     if (!data.length) return { ok: false, message: `${email} isn't on the team any more.` };
 
-    if (input.password) {
-      const service = createServiceClient();
-      const { data: list, error: listError } = await service.auth.admin.listUsers({ perPage: 1000 });
-      if (listError) throw listError;
-      const login = list.users.find((u) => u.email?.toLowerCase() === email);
-      if (!login) return { ok: false, message: `The name is saved, but ${email} has no login to set a password on.` };
-      const { error: pwError } = await service.auth.admin.updateUserById(login.id, { password: input.password });
-      if (pwError) throw pwError;
-    }
+    if (input.password && !(await setPassword(email, input.password)))
+      return { ok: false, message: `The name is saved, but ${email} has no login to set a password on.` };
   } catch (err) {
     return failed(err);
   }
