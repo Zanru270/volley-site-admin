@@ -4,7 +4,7 @@ import SaveBar from "@/components/SaveBar";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { EyeOff, Globe, Trash2 } from "lucide-react";
-import { button, Field, inputClass, SaveButton } from "@/components/ui";
+import { button, Field, SaveButton } from "@/components/ui";
 import { useToast } from "@/components/ToastProvider";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { useConfirm } from "@/components/ConfirmProvider";
@@ -27,6 +27,7 @@ import type { Article } from "@/lib/types";
 import { deleteArticle, saveArticle } from "./actions";
 import ArticleForm from "./ArticleForm";
 import { ArticlePhotos, BlockFields, BLOCKS, blockLabel, slugify } from "./fields";
+import { DatePicker } from "@/components/DatePicker";
 
 // The cards: the parts of the page, and the form view with all of it.
 type Card = ArticleField | "form";
@@ -242,7 +243,7 @@ export default function ArticleLiveEditor({ initial, preview }: { initial: Artic
       case "date":
         return (
           <Field label="Date">
-            <input type="date" value={draft.date ?? ""} onChange={(e) => set({ date: e.target.value || null })} className={inputClass} />
+            <DatePicker value={draft.date ?? ""} onChange={(d) => set({ date: d || null })} />
           </Field>
         );
       case "body": {

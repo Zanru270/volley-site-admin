@@ -39,6 +39,7 @@ import {
   type JobApplication,
 } from "@/lib/careers";
 import { decideApplication, deleteApplication, saveApplicationNotes, setApplicationStatus } from "./actions";
+import { DateTimePicker } from "@/components/DatePicker";
 
 const TONE: Record<string, "yellow" | "pink" | "lemon" | "stone" | "ink"> = {
   new: "yellow",
@@ -601,7 +602,7 @@ function DecisionWindow({
       {kind === "interview" && (
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="When" hint="Leave empty to invite now and set the time later.">
-            <input type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} className={inputClass} />
+            <DateTimePicker value={at} onChange={setAt} />
           </Field>
           <Field label="Where">
             <input value={place} onChange={(e) => setPlace(e.target.value)} className={inputClass} placeholder="Volley Brooklyn, or a video call link" />

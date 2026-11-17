@@ -8,6 +8,7 @@ import {
   Home,
   Inbox,
   LayoutDashboard,
+  Mail,
   PanelBottom,
   UserSearch,
   Users,
@@ -39,6 +40,7 @@ export const NAV_GROUPS: { title: string; pages: NavPage[] }[] = [
       { name: "Buildings", href: "/buildings", icon: Building2, keywords: "locations residences rooms fees" },
       { name: "Volley Reader", href: "/articles", icon: FileText, keywords: "articles blog news" },
       { name: "Footer", href: "/footer", icon: PanelBottom, keywords: "social links instagram facebook tiktok linkedin" },
+      { name: "Newsletter", href: "/newsletter", icon: Mail, keywords: "sign-ups subscribers emails mailing list" },
     ],
   },
   {

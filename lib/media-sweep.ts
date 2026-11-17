@@ -17,6 +17,7 @@ import { parseCroppedPath } from "@/lib/storage-utils";
 
 // Every table whose rows can hold a photo's address.
 const TABLES = ["settings", "faqs", "articles", "locations"];
+const OPTIONAL_TABLES = ["newsletter_settings", "newsletter_sends"];
 const MIN_AGE_MS = 24 * 60 * 60 * 1000;
 
 export async function sweepUnusedUploads(): Promise<void> {
@@ -45,6 +46,13 @@ export async function sweepUnusedUploads(): Promise<void> {
       const { data, error } = await db.from(table).select("*");
       if (error) throw error;
       saved += JSON.stringify(data);
+    }
+    // The newsletter's photos, once supabase/newsletter.sql has made its
+    // tables (until then there's nothing of theirs to keep).
+    for (const table of OPTIONAL_TABLES) {
+      const { data, error } = await db.from(table).select("*");
+      if (error && !["42P01", "PGRST205"].includes(error.code)) throw error;
+      saved += JSON.stringify(data ?? []);
     }
     // Addresses can be saved percent-encoded; a stray % is left as it is.
     saved = decodeURIComponent(saved.replace(/%(?![0-9A-Fa-f]{2})/g, "%25"));

@@ -8,6 +8,7 @@ import { useToast } from "@/components/ToastProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { INTERVIEW_LENGTHS, type InterviewPlan, type InterviewSettings, type WaitlistEntry } from "@/lib/waitlist";
 import { cancelInterview, previewInterviewEmail, scheduleInterview } from "./interviews/actions";
+import { DatePicker, TimePicker } from "@/components/DatePicker";
 
 // A date and time as Pretoria has them, from an ISO moment.
 const local = (iso: string) => {
@@ -151,10 +152,10 @@ export default function ScheduleWindow({
         >
           <div className="grid gap-4 sm:grid-cols-[1fr_8rem_9rem]">
             <Field label="Day">
-              <input type="date" required value={date} onChange={(ev) => setDate(ev.target.value)} className={inputClass} />
+              <DatePicker required value={date} onChange={setDate} />
             </Field>
             <Field label="Time">
-              <input type="time" required value={time} onChange={(ev) => setTime(ev.target.value)} className={inputClass} />
+              <TimePicker required value={time} onChange={setTime} />
             </Field>
             <CustomSelect
               label="How long"

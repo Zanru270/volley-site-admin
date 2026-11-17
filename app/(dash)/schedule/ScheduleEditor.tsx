@@ -12,6 +12,7 @@ import { useDraftBackup, useSaveWhenOnline } from "@/lib/offline";
 import type { ViewingWindow, Viewings } from "@/lib/types";
 import { DAY_NAMES, daysLabel, WEEK } from "@/lib/viewings";
 import { saveViewings } from "./actions";
+import { DatePicker, TimePicker } from "@/components/DatePicker";
 
 const SHORT = (n: number) => DAY_NAMES[n].slice(0, 3);
 
@@ -236,7 +237,7 @@ export default function ScheduleEditor({
               options={houses.map((h) => ({ value: h.slug, label: h.name }))}
             />
             <Field label="Date">
-              <input type="date" value={previewDate} onChange={(e) => setPreviewDate(e.target.value)} className={inputClass} />
+              <DatePicker value={previewDate} onChange={setPreviewDate} />
             </Field>
           </div>
           {preview && (
@@ -310,10 +311,10 @@ export default function ScheduleEditor({
 
             <div className="grid grid-cols-2 gap-4">
               <Field label="From">
-                <input type="time" required value={editing.window.from} onChange={(e) => setDraft({ from: e.target.value })} className={inputClass} />
+                <TimePicker required value={editing.window.from} onChange={(from) => setDraft({ from })} />
               </Field>
               <Field label="To">
-                <input type="time" required value={editing.window.to} onChange={(e) => setDraft({ to: e.target.value })} className={inputClass} />
+                <TimePicker required value={editing.window.to} onChange={(to) => setDraft({ to })} />
               </Field>
             </div>
 

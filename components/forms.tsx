@@ -7,6 +7,7 @@ import { button, iconButton, iconButtonDanger, inputClass, textareaClass } from 
 import { useToast, type ToastAction } from "@/components/ToastProvider";
 import type { Result } from "@/lib/result";
 import Sortable from "@/components/Sortable";
+import { DatePicker } from "@/components/DatePicker";
 
 export { move } from "@/components/Sortable";
 
@@ -158,6 +159,8 @@ export function StringList({
                 placeholder={placeholder}
                 className={textareaClass}
               />
+            ) : type === "date" ? (
+              <DatePicker value={value} onChange={(v) => set(sort.index, v)} clearable={false} className="w-full" />
             ) : (
               <input
                 type={type}

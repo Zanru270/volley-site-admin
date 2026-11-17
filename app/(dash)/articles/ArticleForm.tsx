@@ -4,6 +4,7 @@ import { Field, inputClass, textareaClass } from "@/components/ui";
 import FormSections from "@/components/FormSections";
 import type { Article } from "@/lib/types";
 import { ArticleBody, ArticlePhotos } from "./fields";
+import { DatePicker } from "@/components/DatePicker";
 
 /* One article as a form, section by section: the live editor's "Form view",
    in its side panel. It edits the editor's own draft, so the page beside it
@@ -42,12 +43,7 @@ export default function ArticleForm({
                   <input value={a.location} onChange={(e) => onChange({ location: e.target.value })} className={inputClass} />
                 </Field>
                 <Field label="Date" hint="Newest show first.">
-                  <input
-                    type="date"
-                    value={a.date ?? ""}
-                    onChange={(e) => onChange({ date: e.target.value || null })}
-                    className={inputClass}
-                  />
+                  <DatePicker value={a.date ?? ""} onChange={(d) => onChange({ date: d || null })} />
                 </Field>
                 <Field label="Category" hint="The line under the title.">
                   <input value={a.category} onChange={(e) => onChange({ category: e.target.value })} className={inputClass} />
